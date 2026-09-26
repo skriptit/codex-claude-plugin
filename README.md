@@ -6,9 +6,18 @@ Claude counsel and combined code or document reviews inside Codex. Codex leads t
 
 ## Install
 
-You need Node.js 24 with npm, Python 3.9 or newer, and a Codex host that supports local plugins and native subagents. Code review also needs Git. For the CLI backend, install and authenticate a compatible Claude Code CLI. The SDK backend requires `ANTHROPIC_API_KEY` in the host environment; keep credentials outside this repository and out of chat.
+You need Node.js 24 with npm and a Codex host that supports local plugins and native subagents. Git is required for the Git marketplace route and code review; Python 3.9 or newer is required only for manual registration. For the CLI backend, install and authenticate a compatible Claude Code CLI. The SDK backend requires `ANTHROPIC_API_KEY` in the host environment; keep credentials outside this repository and out of chat.
 
-Clone [the source repository](https://github.com/skriptit/codex-claude-plugin) or extract `codex-claude-agents-source.zip` to a `codex-claude-agents/` directory. From that directory, build and register the plugin:
+Recommended: add the Git marketplace, then install the plugin:
+
+```sh
+codex plugin marketplace add skriptit/codex-claude-plugin --ref codex/marketplace
+codex plugin add claude@skriptit-claude
+```
+
+Start a new Codex task so it loads the skills, then run `$claude:setup`.
+
+For a manual source or ZIP installation, register the plugin in your personal marketplace. Clone [the source repository](https://github.com/skriptit/codex-claude-plugin) or extract `codex-claude-agents-source.zip` to a `codex-claude-agents/` directory. From that directory, build and register it:
 
 ```sh
 npm ci --ignore-scripts
@@ -22,7 +31,7 @@ The ready-built archive (`claude-plugin.zip`) contains a `claude/` directory, a 
 python register-personal.py --source claude
 ```
 
-After either route, install `claude@personal` in Codex, start a new task so Codex loads its skills, then run `$claude:setup`. Registration changes your local personal marketplace. To update an existing plugin directory, rerun registration with `--replace`; the helper backs up that directory first. Setup installs the packaged runtime into a versioned per-user directory and stores configuration outside the repository. Run `$claude:setup --check` for a read-only prerequisite and configuration check; it does not install a missing runtime or test a live Claude call.
+After either manual route, install `claude@personal` in Codex, start a new task, then run `$claude:setup`. Registration changes your local personal marketplace. To update an existing plugin directory, rerun registration with `--replace`; the helper backs up that directory first. Setup installs the packaged runtime into a versioned per-user directory and stores configuration outside the repository. Run `$claude:setup --check` for a read-only prerequisite and configuration check; it does not install a missing runtime or test a live Claude call.
 
 The public command prefix is `claude:`. Internal launcher, environment, and saved-run identifiers still use `cca` for compatibility.
 
@@ -75,6 +84,6 @@ npm test
 npm run release
 ```
 
-`npm run release` builds three archives in `release/`: `codex-claude-agents-source.zip` contains buildable source; `claude-plugin.zip` contains the ready-built plugin, install README, and registration helper; `claude-marketplace.zip` contains only the ready-built plugin under one top-level `claude/` directory for marketplace ZIP import. Type checking and tests are deterministic and do not establish authenticated provider or native host behavior. `npm run smoke -- cli` and `npm run smoke -- sdk` make real provider calls; run them only with the corresponding credentials and environment. Authenticated SDK operation, macOS/Linux process lifecycle, and native host interface behavior require validation in those environments before making platform-wide claims.
+`npm run release` builds three archives in `release/`: `codex-claude-agents-source.zip` contains buildable source; `claude-plugin.zip` contains the ready-built plugin, install README, and registration helper; `claude-marketplace.zip` is a plugin-only bundle under one top-level `claude/` directory. Type checking and tests are deterministic and do not establish authenticated provider or native host behavior. `npm run smoke -- cli` and `npm run smoke -- sdk` make real provider calls; run them only with the corresponding credentials and environment. Authenticated SDK operation, macOS/Linux process lifecycle, and native host interface behavior require validation in those environments before making platform-wide claims.
 
 See [architecture](docs/architecture.md) and [troubleshooting](docs/troubleshooting.md). Report problems through [GitHub Issues](https://github.com/skriptit/codex-claude-plugin/issues). Released under the [MIT License](LICENSE); dependency notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
