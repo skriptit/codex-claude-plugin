@@ -7,13 +7,13 @@ const SOURCE_NAME = 'codex-claude-plugin';
 const PLUGIN_NAME = 'claude';
 const SOURCE_ROOT_FILES = [
   '.agents/plugins/marketplace.json', '.gitattributes', '.gitignore', 'LICENSE', 'README.md',
-  'THIRD_PARTY_NOTICES.md', 'package.json', 'package-lock.json', 'tsconfig.json',
+  'THIRD_PARTY_NOTICES.md', 'package.json', 'package-lock.json', 'tsconfig.json', 'tsconfig.tools.json',
   '.github/workflows/test.yml',
 ];
 const PUBLIC_DOCS = ['architecture.md', 'troubleshooting.md'];
 const PUBLIC_SCRIPTS = [
-  'copy-assets.mjs', 'package.mjs', 'register-personal.py',
-  'release.mjs', 'smoke.mjs',
+  'copy-assets.ts', 'package.ts', 'register-personal.py',
+  'release.ts', 'smoke.ts',
 ];
 const PUBLIC_REFERENCES = ['decide.md', 'relay.md', 'selection.md'];
 const PUBLIC_SKILLS = ['agent', 'cancel', 'decide', 'resume', 'review', 'runs', 'setup'];
@@ -28,13 +28,15 @@ const PUBLIC_SOURCE = [
   'workflows/agents.ts', 'workflows/engine.ts', 'workflows/state.ts',
 ];
 const PUBLIC_TESTS = [
-  'adapter.test.mjs', 'bootstrap.test.mjs', 'core.test.mjs',
-  'fixture-driver.mjs', 'fixture-process.mjs', 'fixture-writer.mjs',
-  'lifecycle.test.mjs', 'packaging.test.mjs', 'recovery.test.mjs',
-  'release.test.mjs', 'sdk-transport.test.mjs',
+  'adapter.test.ts', 'bootstrap.test.ts', 'core.test.ts',
+  'fixture-driver.ts', 'fixture-process.ts', 'fixture-writer.ts',
+  'lifecycle.test.ts', 'packaging.test.ts', 'recovery.test.ts',
+  'release.test.ts', 'sdk-transport.test.ts',
 ];
 
-function assertSafeName(name) {
+type ArchiveFile = { path: string; data: Buffer };
+
+function assertSafeName(name: string) {
   if (!name || name.startsWith('/') || name.includes('\\') || name.split('/').some((part) => !part || part === '.' || part === '..')) {
     throw new Error(`Unsafe archive path: ${name}`);
   }
@@ -43,7 +45,7 @@ function assertSafeName(name) {
   }
 }
 
-async function assertNoSymlinks(root, relative) {
+async function assertNoSymlinks(root: string, relative: string) {
   const absolute = resolve(root);
   const rootPart = parse(absolute).root;
   let current = rootPart;
@@ -61,7 +63,7 @@ async function assertNoSymlinks(root, relative) {
   }
 }
 
-async function fileAt(root, relative) {
+async function fileAt(root: string, relative: string): Promise<ArchiveFile> {
   assertSafeName(relative);
   const full = join(root, ...relative.split('/'));
   const parent = resolve(root) + sep;
@@ -71,7 +73,7 @@ async function fileAt(root, relative) {
   return { path: relative, data: entries };
 }
 
-async function treeFiles(root, relative) {
+async function treeFiles(root: string, relative: string): Promise<string[]> {
   await assertNoSymlinks(root, relative);
   const directory = join(root, ...relative.split('/'));
   const entries = await readdir(directory, { withFileTypes: true });
@@ -87,7 +89,7 @@ async function treeFiles(root, relative) {
   return files.sort();
 }
 
-function verifyTree(paths, allowed, label) {
+function verifyTree(paths: string[], allowed: (path: string) => boolean, label: string) {
   const unexpected = paths.filter((path) => !allowed(path));
   if (unexpected.length) throw new Error(`Unexpected ${label} file(s): ${unexpected.join(', ')}`);
 }
@@ -97,12 +99,12 @@ function staticPluginPaths() {
     'plugin/claude/.codex-plugin/plugin.json',
     'plugin/claude/assets/logo.png',
     ...PUBLIC_REFERENCES.map((name) => `plugin/claude/references/${name}`),
-    'plugin/claude/scripts/codex-claude.mjs',
+    'plugin/claude/scripts/codex-claude.ts',
     ...PUBLIC_SKILLS.map((name) => `plugin/claude/skills/${name}/SKILL.md`),
   ];
 }
 
-async function getStaticPluginPaths(root) {
+async function getStaticPluginPaths(root: string) {
   const staticPaths = staticPluginPaths();
   for (const dir of ['.codex-plugin', 'assets', 'references', 'scripts', 'skills']) {
     const actual = await treeFiles(root, `plugin/claude/${dir}`);
@@ -117,7 +119,7 @@ async function getStaticPluginPaths(root) {
   return staticPaths;
 }
 
-export async function sourceFiles(root) {
+export async function sourceFiles(root: string) {
   const paths = [...SOURCE_ROOT_FILES];
   const workflows = await treeFiles(root, '.github/workflows');
   verifyTree(workflows, (path) => path === '.github/workflows/test.yml', 'workflow');
@@ -141,7 +143,7 @@ export async function sourceFiles(root) {
   return Promise.all(unique.map((path) => fileAt(root, path)));
 }
 
-export async function pluginFiles(root) {
+export async function pluginFiles(root: string) {
   const paths = [
     ...(await getStaticPluginPaths(root)),
     ...GENERATED_PLUGIN_FILES.map((name) => `plugin/claude/${name}`),
@@ -162,8 +164,8 @@ export async function pluginFiles(root) {
   return Promise.all(unique.map((path) => fileAt(root, path)));
 }
 
-export function scanReleaseFiles(files) {
-  const findings = [];
+export function scanReleaseFiles(files: ArchiveFile[]) {
+  const findings: string[] = [];
   const patterns = [
     /[A-Za-z]:[\\/]+Users[\\/]+[^\\/\s'"`<>]+[\\/]/i,
     /\/(?:Users|home)\/[^/\s'"`<>]+\//,
@@ -185,7 +187,7 @@ export function scanReleaseFiles(files) {
   if (findings.length) throw new Error(`Private content found in release files: ${findings.join(', ')}`);
 }
 
-function assertLogoPng(data, path) {
+function assertLogoPng(data: Buffer, path: string) {
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   if (data.length < 33 || data.length > 5 * 1024 * 1024 ||
       !data.subarray(0, 8).equals(signature) ||
@@ -205,18 +207,18 @@ const crcTable = Uint32Array.from({ length: 256 }, (_, index) => {
   return value >>> 0;
 });
 
-function crc32(data) {
+function crc32(data: Buffer) {
   let value = 0xffffffff;
   for (const byte of data) value = crcTable[(value ^ byte) & 0xff] ^ (value >>> 8);
   return (value ^ 0xffffffff) >>> 0;
 }
 
-export function makeZip(files, prefix) {
+export function makeZip(files: ArchiveFile[], prefix: string) {
   if (prefix) assertSafeName(prefix);
   const ordered = [...files].sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
   if (ordered.length > 65535) throw new Error('ZIP file count exceeds classic ZIP limit');
-  const local = [];
-  const central = [];
+  const local: Buffer[] = [];
+  const central: Buffer[] = [];
   let offset = 0;
   let previous = '';
   for (const file of ordered) {
@@ -262,10 +264,10 @@ export function makeZip(files, prefix) {
   return Buffer.concat([...local, ...central, end]);
 }
 
-export async function buildArchives(root, output = join(root, 'release')) {
+export async function buildArchives(root: string, output = join(root, 'release')) {
   const source = await sourceFiles(root);
   const plugin = await pluginFiles(root);
-  const installReadme = Buffer.from('# Claude plugin\n\nRequires Python 3.9+, Node.js 24, and a Codex host with local plugin support. From this extracted directory, run:\n\n```sh\npython register-personal.py --source claude\n```\n\nInstall `claude@personal` in Codex, start a new task, and run `$claude:setup`. Use an authenticated Claude Code CLI or set `ANTHROPIC_API_KEY` in the host environment for the SDK backend. The registrar validates the plugin and adds it to your personal marketplace. Setup stores configuration outside the plugin.\n\nReleased under the [MIT License](claude/LICENSE). Dependency terms are in [THIRD_PARTY_NOTICES.md](claude/THIRD_PARTY_NOTICES.md).\n', 'utf8');
+  const installReadme = Buffer.from('# Codex Claude Plugin\n\nInstall through the Codex marketplace:\n\n```sh\ncodex plugin marketplace add skriptit/codex-claude-plugin\ncodex plugin add claude@skriptit-marketplace\n```\n\nStart a new Codex task and run `$claude:setup`. The plugin requires Node.js 24 with npm and an authenticated Claude Code CLI or `ANTHROPIC_API_KEY` for the SDK backend. Setup stores configuration outside the plugin.\n\nReleased under the [MIT License](claude/LICENSE). Dependency terms are in [THIRD_PARTY_NOTICES.md](claude/THIRD_PARTY_NOTICES.md).\n', 'utf8');
   const pluginZipFiles = [
     ...plugin.map(({ path, data }) => ({ path: path.slice('plugin/'.length), data })),
     { path: 'README.md', data: installReadme },

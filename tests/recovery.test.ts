@@ -11,7 +11,7 @@ import { exclusive } from '../dist/runtime/mutex.js';
 import { approveChecks, runCheck, discoverChecks, verifyCheck } from '../dist/policy/checks.js';
 import { hash } from '../dist/runtime/files.js';
 const root = await mkdtemp(join(tmpdir(), 'codex-claude-recovery-')); process.env.CODEX_CLAUDE_DATA_HOME = join(root, 'data');
-const fixture = fileURLToPath(new URL('./fixture-writer.mjs', import.meta.url));
+const fixture = fileURLToPath(new URL('./fixture-writer.ts', import.meta.url));
 const child = (...args) => { const p = spawn(process.execPath, [fixture, ...args], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); let err = ''; p.stderr.on('data', b => err += b); return { p, done: new Promise((resolve, reject) => { p.on('error', reject); p.on('close', code => code === 0 ? resolve() : reject(new Error(err || `exit ${code}`))); }) }; };
 async function until(fn) { const end = performance.now() + 5000; while (performance.now() < end) { if (await fn()) return; await new Promise(r => setTimeout(r, 40)); } throw new Error('Timed out'); }
 test('separate processes serialize journal commits', async () => {
@@ -26,7 +26,7 @@ test('dead mutex owners recover without deleting any other contender', async () 
   assert.equal((await readdir(directory)).filter(n => n.endsWith('.ticket.json')).length, 1, 'dead owner evidence is preserved');
 });
 test('concurrent identical checks launch only once and do not inherit provider secrets', async () => {
-  const cwd = await mkdtemp(join(root, 'checks-')); const definitionFile = join(cwd, 'check.mjs');
+  const cwd = await mkdtemp(join(root, 'checks-')); const definitionFile = join(cwd, 'check.ts');
   await writeFile(definitionFile, 'if (process.env.ANTHROPIC_API_KEY) process.exit(9); setTimeout(() => console.log("ok"), 500);');
   await approveChecks(cwd, [{ id: 'test', executable: process.execPath, args: [definitionFile], cwd, purpose: 'fixture', definitionFile, definitionKey: null, definitionHash: hash(await readFile(definitionFile)) }]);
   process.env.ANTHROPIC_API_KEY = 'fixture-not-a-key';
@@ -38,9 +38,9 @@ test('concurrent identical checks launch only once and do not inherit provider s
 });
 test('npm lifecycle or nested script changes invalidate approval', async () => {
   const cwd = await mkdtemp(join(root, 'scripts-')); const file = join(cwd, 'package.json');
-  await writeFile(file, JSON.stringify({ scripts: { test: 'node test.mjs', pretest: 'node prepare.mjs' } }));
+  await writeFile(file, JSON.stringify({ scripts: { test: 'node test.ts', pretest: 'node prepare.ts' } }));
   const checks = await discoverChecks(cwd); assert.ok(checks.length); await verifyCheck(checks[0]);
-  await writeFile(file, JSON.stringify({ scripts: { test: 'node test.mjs', pretest: 'node changed.mjs' } }));
+  await writeFile(file, JSON.stringify({ scripts: { test: 'node test.ts', pretest: 'node changed.ts' } }));
   await assert.rejects(verifyCheck(checks[0]), e => e.code === 'check_definition_changed');
 });
 test('setup preserves choices and rejects invalid approvals before writing config', async () => {

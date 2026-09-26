@@ -9,10 +9,10 @@ import { join } from 'node:path';
 async function launcherFixture() {
   const root = await mkdtemp(join(tmpdir(), 'codex-claude-bootstrap-'));
   await mkdir(join(root, 'scripts')); await mkdir(join(root, 'runtime'));
-  await copyFile('plugin/claude/scripts/codex-claude.mjs', join(root, 'scripts', 'codex-claude.mjs'));
+  await copyFile('plugin/claude/scripts/codex-claude.ts', join(root, 'scripts', 'codex-claude.ts'));
   const files = {};
   await writeFile(join(root, 'runtime', 'bundle.json'), JSON.stringify({ version: '0.0.0', files, digest: createHash('sha256').update(JSON.stringify(files)).digest('hex') }));
-  return join(root, 'scripts', 'codex-claude.mjs');
+  return join(root, 'scripts', 'codex-claude.ts');
 }
 
 test('bootstrap preserves saved choices when an updated runtime needs installation, without writes', async () => {

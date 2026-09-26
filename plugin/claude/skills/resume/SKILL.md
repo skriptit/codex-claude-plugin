@@ -5,7 +5,7 @@ description: Continue an exact saved Claude decision or review run while preserv
 
 # Resume a saved run
 
-Resolve this plugin's root two directories above this skill folder. Inspect `scripts/codex-claude.mjs runs <run-id>` first. Use the exact run ID, never the latest workspace session.
+Resolve this plugin's root two directories above this skill folder. Inspect `scripts/codex-claude.ts runs <run-id>` first. Use the exact run ID, never the latest workspace session.
 
 If still running, inspect or cancel it; do not branch/relaunch it. If awaiting the lead, retrieve the full last reply and continue [decision coordination](../../references/decide.md). If awaiting the user, re-present that checkpoint and wait for the actual answer; a resume request does not silently answer a checkpoint.
 

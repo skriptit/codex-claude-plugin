@@ -21,7 +21,7 @@ async function files(dir, prefix = '') {
 }
 
 test('runtime package is deterministic and contains only production files', async () => {
-  const run = () => JSON.parse(execFileSync(process.execPath, ['scripts/package.mjs'], { cwd: root, encoding: 'utf8' }));
+  const run = () => JSON.parse(execFileSync(process.execPath, ['scripts/package.ts'], { cwd: root, encoding: 'utf8' }));
   const first = run();
   const runtime = join(plugin, 'runtime');
   const bundle = JSON.parse(await readFile(join(runtime, 'bundle.json'), 'utf8'));
@@ -53,7 +53,7 @@ test('runtime packaging refuses a stale compiled module', async t => {
   await mkdir(join(temp, 'plugin', 'claude', '.codex-plugin'), { recursive: true });
   await cp(join(plugin, '.codex-plugin', 'plugin.json'), join(temp, 'plugin', 'claude', '.codex-plugin', 'plugin.json'));
   await writeFile(join(temp, 'dist', 'private.js'), 'export const stale = true;\n');
-  assert.throws(() => execFileSync(process.execPath, [join(root, 'scripts', 'package.mjs')], { cwd: temp, stdio: 'pipe' }), /stale: private.js/);
+  assert.throws(() => execFileSync(process.execPath, [join(root, 'scripts', 'package.ts')], { cwd: temp, stdio: 'pipe' }), /stale: private.js/);
   await assert.rejects(readFile(join(temp, 'plugin', 'claude', 'runtime', 'bundle.json')), { code: 'ENOENT' });
 });
 
@@ -112,14 +112,14 @@ test('registration requires explicit replacement and retains a backup of the old
   await cp(plugin, source, { recursive: true });
   const args = ['scripts/register-personal.py', '--source', source, '--marketplace-path', marketplace];
   execFileSync(python, args, { cwd: root, stdio: 'pipe' });
-  const oldLauncher = await readFile(join(destination, 'scripts', 'codex-claude.mjs'));
-  await writeFile(join(destination, 'scripts', 'codex-claude.mjs'), 'locally changed');
+  const oldLauncher = await readFile(join(destination, 'scripts', 'codex-claude.ts'));
+  await writeFile(join(destination, 'scripts', 'codex-claude.ts'), 'locally changed');
   assert.throws(() => execFileSync(python, args, { cwd: root, stdio: 'pipe' }), /use --replace/);
   execFileSync(python, [...args, '--replace'], { cwd: root, stdio: 'pipe' });
-  assert.deepEqual(await readFile(join(destination, 'scripts', 'codex-claude.mjs')), oldLauncher);
+  assert.deepEqual(await readFile(join(destination, 'scripts', 'codex-claude.ts')), oldLauncher);
   const backups = (await readdir(join(temp, 'plugins'))).filter(name => name.startsWith('claude.before-'));
   assert.equal(backups.length, 1);
-  assert.equal(await readFile(join(temp, 'plugins', backups[0], 'scripts', 'codex-claude.mjs'), 'utf8'), 'locally changed');
+  assert.equal(await readFile(join(temp, 'plugins', backups[0], 'scripts', 'codex-claude.ts'), 'utf8'), 'locally changed');
 });
 
 test('registration rejects marketplace ancestor links', async t => {

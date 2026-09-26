@@ -17,12 +17,12 @@
   "engines": { "node": ">=24 <25" },
   "bin": { "codex-claude": "dist/cli.js" },
   "scripts": {
-    "build": "tsc && node scripts/copy-assets.mjs",
-    "typecheck": "tsc --noEmit",
-    "test": "npm run build && node --test --test-concurrency=1 tests/*.test.mjs",
-    "smoke": "npm run build && node scripts/smoke.mjs",
-    "package:plugin": "npm run build && node scripts/package.mjs",
-    "release": "npm run package:plugin && node scripts/release.mjs"
+    "build": "tsc && tsc -p tsconfig.tools.json && node scripts/copy-assets.ts",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.tools.json",
+    "test": "npm run build && node --test --test-concurrency=1 tests/*.test.ts",
+    "smoke": "npm run build && node scripts/smoke.ts",
+    "package:plugin": "npm run build && node scripts/package.ts",
+    "release": "npm run package:plugin && node scripts/release.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.3.268",

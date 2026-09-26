@@ -1,6 +1,6 @@
 # Forward one Claude call
 
-Resolve the plugin root from the loaded skill and use its `scripts/codex-claude.mjs` launcher. Use the same launcher on desktop and CLI, through the host's actual shell tool. Use current permissions; do not hardcode escalation or change global Codex settings.
+Resolve the plugin root from the loaded skill and use its `scripts/codex-claude.ts` launcher. Use the same launcher on desktop and CLI, through the host's actual shell tool. Use current permissions; do not hardcode escalation or change global Codex settings.
 
 At workflow start, call `setup --check` once to resolve the installed `runtime.entrypoint`. Use that absolute entrypoint as the launcher for the remainder of the run; it lives in the stable per-user runtime root, so a marketplace cache refresh cannot remove it. Save it with the run ID. Each receipt also carries the engine-recorded runtimeEntrypoint. On resume inspect the run and use its recorded immutable runtime; never guess a most-recent runtime. Missing original runtime is an explicit compatibility failure. Do not install, upgrade or migrate anything during this read-only resolution.
 

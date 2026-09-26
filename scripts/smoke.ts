@@ -5,17 +5,20 @@ import { randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { runProvider } from '../dist/providers/run.js';
 import { writeJson } from '../dist/runtime/files.js';
+import type { Activity } from '../src/contracts.ts';
 
 const backend = process.argv[2] || 'cli';
-if (!['cli', 'sdk'].includes(backend)) throw new Error('Use cli or sdk');
+if (backend !== 'cli' && backend !== 'sdk') throw new Error('Use cli or sdk');
 if (backend === 'sdk' && !process.env.ANTHROPIC_API_KEY) { console.error('SDK live verification pending: ANTHROPIC_API_KEY is not configured.'); process.exit(2); }
 const root = await mkdtemp(join(tmpdir(), 'codex-claude-live-'));
 const cwd = join(root, 'project'); await mkdir(join(cwd, '.claude'), { recursive: true });
 await writeFile(join(cwd, 'fixture.txt'), 'Claude permitted evidence fixture.');
 await writeFile(join(root, 'outside.txt'), 'Outside the approved working directory.');
-await writeFile(join(cwd, 'hook.mjs'), `import{writeFileSync}from'node:fs';writeFileSync(${JSON.stringify(join(root, 'unexpected-hook'))},'ran');`);
-await writeJson(join(cwd, '.claude', 'settings.json'), { hooks: { SessionStart: [{ hooks: [{ type: 'command', command: `node "${join(cwd, 'hook.mjs')}"` }] }] } });
-let sessionId; const nonce = `codex-claude-memory-${randomUUID()}`; const results = []; const activity = [];
+await writeFile(join(cwd, 'hook.ts'), `import{writeFileSync}from'node:fs';writeFileSync(${JSON.stringify(join(root, 'unexpected-hook'))},'ran');`);
+await writeJson(join(cwd, '.claude', 'settings.json'), { hooks: { SessionStart: [{ hooks: [{ type: 'command', command: `node "${join(cwd, 'hook.ts')}"` }] }] } });
+let sessionId: string | undefined; const nonce = `codex-claude-memory-${randomUUID()}`;
+const results: Array<Awaited<ReturnType<typeof runProvider>>> = [];
+const activity: Array<Activity & { round: number }> = [];
 console.log(JSON.stringify({ artifactDirectory: root, backend, started: true }));
 for (let round = 1; round <= 3; round++) {
   const directory = join(root, `round-${round}`);
@@ -25,8 +28,10 @@ for (let round = 1; round <= 3; round++) {
   const result = await runProvider({ cwd, directory, prompt, settings: { backend, model: 'claude-fable-5-1', effort: 'high' }, workflow: 'decide', sessionId }, e => { activity.push({ round, ...e }); if (e.type !== 'text' || e.text.trim()) console.error(`[claude:progress] ${JSON.stringify({ round, ...e })}`); });
   results.push(result); await writeJson(join(root, 'evidence.json'), { backend, results, activity });
   assert.equal(result.status, 'completed', JSON.stringify(result));
+  assert.ok(result.reply);
   assert.ok(result.reply.answer.includes(nonce), 'Structured resumed answer lost conversation memory');
-  if (sessionId) assert.equal(result.sessionId, sessionId); else sessionId = result.sessionId;
+  if (sessionId) assert.equal(result.sessionId, sessionId);
+  else { assert.ok(result.sessionId); sessionId = result.sessionId; }
   console.log(JSON.stringify({ round, status: result.status, sessionId, models: result.observedModels, effectiveEffort: result.effectiveEffort, costUsd: result.costUsd }));
 }
 const { existsSync } = await import('node:fs');

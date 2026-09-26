@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { buildArchives, makeZip, scanReleaseFiles, sourceFiles } from '../scripts/release.mjs';
+import { buildArchives, makeZip, scanReleaseFiles, sourceFiles } from '../scripts/release.ts';
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -63,7 +63,7 @@ test('release archives are deterministic and contain only intended install files
   const root = await fixture(t);
   await mkdir(join(root, 'artifacts'), { recursive: true });
   await writeFile(join(root, 'artifacts', 'private.json'), '{"local": true}\n');
-  await writeFile(join(root, 'scripts', 'native-fixture.mjs'), 'local diagnostic\n');
+  await writeFile(join(root, 'scripts', 'native-fixture.ts'), 'local diagnostic\n');
   const first = await buildArchives(root, join(root, 'out-one'));
   const second = await buildArchives(root, join(root, 'out-two'));
   assert.deepEqual(first.map(({ sha256 }) => sha256), second.map(({ sha256 }) => sha256));
@@ -72,12 +72,16 @@ test('release archives are deterministic and contain only intended install files
   const marketplace = zipNames(await readFile(first[2].path));
   assert(source.includes('codex-claude-plugin/scripts/register-personal.py'));
   assert(source.includes('codex-claude-plugin/.agents/plugins/marketplace.json'));
+  assert(source.includes('codex-claude-plugin/tsconfig.tools.json'));
   assert(source.includes('codex-claude-plugin/src/cli.ts'));
+  assert(source.includes('codex-claude-plugin/scripts/release.ts'));
   assert(source.includes('codex-claude-plugin/plugin/claude/assets/logo.png'));
-  assert(!source.some((name) => name.includes('private.json') || name.includes('native-fixture.mjs') || name.includes('/runtime/dist/')));
+  assert(!source.some((name) => name.endsWith('.mjs')));
+  assert(!source.some((name) => name.includes('private.json') || name.includes('native-fixture.ts') || name.includes('/runtime/dist/')));
   assert(plugin.includes('README.md'));
   assert(plugin.includes('register-personal.py'));
   assert(plugin.includes('claude/runtime/dist/cli.js'));
+  assert(plugin.includes('claude/scripts/codex-claude.ts'));
   assert(plugin.includes('claude/LICENSE'));
   assert(plugin.includes('claude/assets/logo.png'));
   assert(!plugin.some((name) => name.includes('/src/') || name.includes('private.json')));
@@ -95,7 +99,7 @@ test('new source, test, or plugin files require an explicit release list change'
   await writeFile(sourceNote, 'private notes\n');
   await assert.rejects(sourceFiles(root), /Unexpected source file/);
   await rm(sourceNote);
-  const testNote = join(root, 'tests', 'local-note.mjs');
+  const testNote = join(root, 'tests', 'local-note.ts');
   await writeFile(testNote, 'private notes\n');
   await assert.rejects(sourceFiles(root), /Unexpected test file/);
   await rm(testNote);

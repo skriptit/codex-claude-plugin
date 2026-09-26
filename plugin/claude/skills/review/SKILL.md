@@ -5,7 +5,7 @@ description: Run one Claude reviewer combining adversarial, specification and st
 
 # Combined Claude review
 
-Resolve this plugin's root two directories above this skill folder. Read [the forwarding contract](../../references/relay.md). Launch its `scripts/codex-claude.mjs review` through one native forwarding subagent with the absolute workspace and user-selected inputs.
+Resolve this plugin's root two directories above this skill folder. Read [the forwarding contract](../../references/relay.md). Launch its `scripts/codex-claude.ts review` through one native forwarding subagent with the absolute workspace and user-selected inputs.
 
 Default scope is staged, unstaged and non-ignored untracked text changes against HEAD. `--base REF` and `--staged` are mutually exclusive; repeatable `--path` filters Git scope. Repeatable `--document` selects document review instead. Accept repeatable `--spec`/`--standards` and run overrides `--backend`, `--model`, `--effort`, `--budget-usd`.
 

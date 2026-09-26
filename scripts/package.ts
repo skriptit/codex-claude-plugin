@@ -18,8 +18,8 @@ if (lock.lockfileVersion !== 3 || lock.packages?.['']?.version !== pkg.version |
   throw new Error('package-lock.json does not match production dependencies');
 }
 
-async function files(dir, prefix = '') {
-  const paths = [];
+async function files(dir: string, prefix = ''): Promise<string[]> {
+  const paths: string[] = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
     const name = `${prefix}${entry.name}`;
@@ -57,24 +57,25 @@ const productionPackage = {
   bin: pkg.bin,
   dependencies: pkg.dependencies,
 };
+const productionPackages: Record<string, unknown> = {
+  '': {
+    name: pkg.name,
+    version: pkg.version,
+    license: pkg.license,
+    dependencies: pkg.dependencies,
+    bin: pkg.bin,
+    engines: pkg.engines,
+  },
+};
 const productionLock = {
   name: lock.name,
   version: lock.version,
   lockfileVersion: lock.lockfileVersion,
   requires: lock.requires,
-  packages: {
-    '': {
-      name: pkg.name,
-      version: pkg.version,
-      license: pkg.license,
-      dependencies: pkg.dependencies,
-      bin: pkg.bin,
-      engines: pkg.engines,
-    },
-  },
+  packages: productionPackages,
 };
 for (const [name, record] of Object.entries(lock.packages)) {
-  if (name && !record.dev) productionLock.packages[name] = record;
+  if (name && typeof record === 'object' && record !== null && !('dev' in record && record.dev)) productionLock.packages[name] = record;
 }
 
 // The generated subtree is replaced as a unit. No user data lives here.
@@ -93,7 +94,7 @@ for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md']) {
   await cp(join(source, name), join(runtime, name));
 }
 
-const manifest = {};
+const manifest: Record<string, string> = {};
 for (const file of await files(runtime)) {
   manifest[file] = createHash('sha256').update(await readFile(join(runtime, file))).digest('hex');
 }

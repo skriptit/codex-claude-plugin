@@ -23,7 +23,7 @@ try {
     if (args[0] !== 'setup' || args.includes('--check')) {
       let configuration = null;
       try { configuration = JSON.parse(await readFile(join(root, 'config.json'), 'utf8')); }
-      catch (error) { if (error.code !== 'ENOENT') throw error; }
+      catch (error) { if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error; }
       process.stdout.write(JSON.stringify({ status: 'setup_required', dataRoot: root, configuration, changed: false, message: 'Run $claude:setup to install this runtime. Preserve any saved choices. No settings or state were changed.' }) + '\n'); process.exitCode = args.includes('--check') ? 0 : 1;
     } else {
       const staging = `${runtime}.install-${randomUUID()}`; await mkdir(staging, { recursive: true, mode: 0o700 });
@@ -35,7 +35,7 @@ try {
         await mkdir(dirname(to), { recursive: true }); await cp(from, to);
       }
       const candidates = [process.env.npm_execpath, join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'), join(dirname(process.execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js')].filter(Boolean);
-      let npm; for (const candidate of candidates) { try { await access(candidate); npm = candidate; break; } catch {} }
+      let npm: string | undefined; for (const candidate of candidates) { if (!candidate) continue; try { await access(candidate); npm = candidate; break; } catch {} }
       if (!npm) throw new Error('npm CLI not found beside Node. Install Node.js 24 LTS with npm.');
       process.stderr.write('[claude:progress] {"type":"status","text":"Installing the versioned plugin runtime with locked dependencies."}\n');
       const child = spawn(process.execPath, [npm, 'ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: staging, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
