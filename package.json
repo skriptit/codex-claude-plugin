@@ -1,0 +1,36 @@
+{
+  "name": "codex-claude-agents",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "Skript It Oy",
+  "homepage": "https://github.com/skriptit/codex-claude-plugin",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skriptit/codex-claude-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/skriptit/codex-claude-plugin/issues"
+  },
+  "description": "Claude counsel and combined reviews in native Codex workflows",
+  "type": "module",
+  "engines": { "node": ">=24 <25" },
+  "bin": { "cca": "dist/cli.js" },
+  "scripts": {
+    "build": "tsc && node scripts/copy-assets.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test --test-concurrency=1 tests/*.test.mjs",
+    "smoke": "npm run build && node scripts/smoke.mjs",
+    "package:plugin": "npm run build && node scripts/package.mjs",
+    "release": "npm run package:plugin && node scripts/release.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.268",
+    "@modelcontextprotocol/server": "2.0.0",
+    "zod": "4.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.12.0",
+    "typescript": "7.0.2"
+  }
+}

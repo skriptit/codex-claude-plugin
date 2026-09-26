@@ -1,0 +1,28 @@
+{
+  "name": "claude",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Claude counsel and combined adversarial, specification and standards reviews inside Codex.",
+  "author": {
+    "name": "Skript It Oy"
+  },
+  "homepage": "https://github.com/skriptit/codex-claude-plugin",
+  "repository": "https://github.com/skriptit/codex-claude-plugin",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Claude Plugin",
+    "shortDescription": "Claude counsel and reviews",
+    "longDescription": "Run Claude counsel and one combined reviewer through native Codex subagents. Configure CLI or Agent SDK authentication, model and effort; inspect exact saved replies and continue decision debates with user checkpoints.",
+    "developerName": "Skript It Oy",
+    "category": "Productivity",
+    "websiteURL": "https://github.com/skriptit/codex-claude-plugin",
+    "logo": "./assets/logo.png",
+    "composerIcon": "./assets/logo.png",
+    "capabilities": [],
+    "defaultPrompt": [
+      "Use $claude:setup to configure Claude agents.",
+      "Use $claude:decide to challenge this proposal.",
+      "Use $claude:review to review my changes."
+    ]
+  }
+}
