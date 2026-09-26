@@ -71,6 +71,7 @@ test('release archives are deterministic and contain only intended install files
   const plugin = zipNames(await readFile(first[1].path));
   const marketplace = zipNames(await readFile(first[2].path));
   assert(source.includes('codex-claude-plugin/scripts/register-personal.py'));
+  assert(source.includes('codex-claude-plugin/.agents/plugins/marketplace.json'));
   assert(source.includes('codex-claude-plugin/src/cli.ts'));
   assert(source.includes('codex-claude-plugin/plugin/claude/assets/logo.png'));
   assert(!source.some((name) => name.includes('private.json') || name.includes('native-fixture.mjs') || name.includes('/runtime/dist/')));

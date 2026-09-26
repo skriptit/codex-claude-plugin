@@ -1,10 +1,7 @@
 node_modules/
-dist/
+/dist/
 artifacts/
 release/
-plugin/claude/runtime/
-plugin/claude/LICENSE
-plugin/claude/THIRD_PARTY_NOTICES.md
 __pycache__/
 *.pyc
 .DS_Store

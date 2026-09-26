@@ -1,0 +1,20 @@
+{
+  "name": "skriptit-marketplace",
+  "interface": {
+    "displayName": "Codex Claude Plugin"
+  },
+  "plugins": [
+    {
+      "name": "claude",
+      "source": {
+        "source": "local",
+        "path": "./plugin/claude"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

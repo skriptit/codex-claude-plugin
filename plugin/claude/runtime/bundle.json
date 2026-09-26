@@ -1,0 +1,33 @@
+{
+  "version": "0.1.0",
+  "digest": "ba4622a89ca00c28c2070a625683fff7b445f5fef4aa055b44433ccc2175528d",
+  "files": {
+    "LICENSE": "2f26f6ba88412109693456ccc6e1385d9ca7506fef7df8f1ee03c5f5deb59838",
+    "THIRD_PARTY_NOTICES.md": "5664d861bb4fece4c102d846ac86ab4406273ed45a153fb651ca264ca76f57bc",
+    "dist/cli.js": "ec772f00ac5b42a899162d16ef507b2da3390db7b39df5097d6832bffab7be9d",
+    "dist/contracts.js": "fc808951494fa14b61a7af07b4bb82e27b02819c315545536acd72c3dabdaee1",
+    "dist/inputs/bundle.js": "c1307613cbfb30f16a3dbc6550f5c9b53dd9cf19d5403940014c51c084556977",
+    "dist/inputs/git.js": "af8f04efed520690841ab2dc9addd2db6576da8882b14ee089a7ac70edf4e1bd",
+    "dist/policy/checks.js": "62f777b1ba6618cb9834af65bcd26374b0f493445326a8c140875868c28e0a70",
+    "dist/policy/server.js": "b4d9b280cf8b51b0800e3e69e057eb1be74117fdc8e2f88e69f13cabd74a20aa",
+    "dist/presentation/render.js": "55966eb2558c222b67a07620843f810977458b1b2a8e94999230ede93ec26228",
+    "dist/providers/options.js": "2d1dbf320c84846b70fec7cfe5ed9dfa2be397336e1053b7f40526f1e574c5ce",
+    "dist/providers/run.js": "da3984e19a163d5ef3e4a1b618f95e747e3ebd12a7e3ac897ef73b098980fba7",
+    "dist/providers/stream.js": "15837b69875f496ad9ac70da482563e2332c51b5d0874c4df57f966a052d1404",
+    "dist/providers/worker.js": "d3ce6d6587559c8de58d5683ef4a19755c2a036c35ef6152f3fad5fa4516cc23",
+    "dist/runtime/command-worker.js": "e2b1c18465560340fd5b5508b2fc046d174fbce3f381ea7767faa96db95044af",
+    "dist/runtime/config.js": "ab2a998132ac7f7a8d353ef2d8be43279204e9656525bb2a57a5738dc748e172",
+    "dist/runtime/containment.js": "faa8eae43180893f01355fd02feec5011227435527e28825ca76a94b5035354a",
+    "dist/runtime/containment.ps1": "fa0da99fa345de15b0d9ab85d63e4ace01900475cff626784aeb07e06382b5bb",
+    "dist/runtime/files.js": "6241ae8ec541713e9e6f9176a85b2e29ab0fb4df84b9b56f12acd8dc047a51be",
+    "dist/runtime/identity.js": "deaed37cf85f55fa466753a8d28dd170e7090dbb0977a22cd8b9fa953b45cd0a",
+    "dist/runtime/journal.js": "b3767dd0c1d360762652a0db081207728429a583a79d6786683449c76f3a4342",
+    "dist/runtime/mutex.js": "fd8ee8c8bc28a08c11ed36ff1767972931e081ac2073014812c430d4053e2849",
+    "dist/runtime/watchdog.js": "1a7a7ff484317038a943b063f9b949245e0aff66c7665eac3a87047fe202051d",
+    "dist/workflows/agents.js": "051560a19baf4481a2fcfa9040348dfbfc403e17fadf26dbf46cfc022531f530",
+    "dist/workflows/engine.js": "baa2c9e38ec33ecafbbb754f8ca47f1d47b339be1ba1fdba8c15ccf210323024",
+    "dist/workflows/state.js": "4ddec6bbbf071c30763a3432186be8b0572986d5a2e543d4e2c277fac9347a10",
+    "package-lock.json": "074c4c5e9ce5b46748d53c18621aebdaf58df344547486962831e7a22093c462",
+    "package.json": "239e62ee83a671462b4c189a1d6e709660a21ac8a2fc8e1567a8fb1afd0b7a6e"
+  }
+}

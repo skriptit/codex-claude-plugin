@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const SOURCE_NAME = 'codex-claude-plugin';
 const PLUGIN_NAME = 'claude';
 const SOURCE_ROOT_FILES = [
-  '.gitattributes', '.gitignore', 'LICENSE', 'README.md',
+  '.agents/plugins/marketplace.json', '.gitattributes', '.gitignore', 'LICENSE', 'README.md',
   'THIRD_PARTY_NOTICES.md', 'package.json', 'package-lock.json', 'tsconfig.json',
   '.github/workflows/test.yml',
 ];

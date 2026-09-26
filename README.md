@@ -11,7 +11,7 @@ You need Node.js 24 with npm, Git, and a Codex host that supports local plugins 
 Add the Git marketplace, then install the plugin:
 
 ```sh
-codex plugin marketplace add skriptit/codex-claude-plugin --ref codex/marketplace
+codex plugin marketplace add skriptit/codex-claude-plugin
 codex plugin add claude@skriptit-marketplace
 ```
 
