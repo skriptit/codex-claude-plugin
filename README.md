@@ -19,6 +19,8 @@ Start a new Codex task so it loads the skills, then run `$claude:setup`.
 
 Setup installs the packaged runtime into a versioned per-user directory and stores configuration outside the repository. Run `$claude:setup --check` for a read-only prerequisite and configuration check; it does not install a missing runtime or test a live Claude call.
 
+Set the default Claude model and requested effort with `$claude:setup --model MODEL_ID --effort high`, replacing `MODEL_ID` with an identifier supported by your chosen backend. Add `--project` to save defaults for the current workspace, and optionally `--workflow decide|review|agent` to target one workflow. Effort can be `low`, `medium`, `high`, `xhigh`, or `max`. After setup, `$claude:setup --check` shows the resolved settings. A new run can override them, for example `$claude:review --model MODEL_ID --effort max`; an existing run keeps the settings it started with.
+
 ## Use
 
 ```text
