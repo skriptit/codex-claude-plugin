@@ -112,14 +112,14 @@ test('registration requires explicit replacement and retains a backup of the old
   await cp(plugin, source, { recursive: true });
   const args = ['scripts/register-personal.py', '--source', source, '--marketplace-path', marketplace];
   execFileSync(python, args, { cwd: root, stdio: 'pipe' });
-  const oldLauncher = await readFile(join(destination, 'scripts', 'cca.mjs'));
-  await writeFile(join(destination, 'scripts', 'cca.mjs'), 'locally changed');
+  const oldLauncher = await readFile(join(destination, 'scripts', 'codex-claude.mjs'));
+  await writeFile(join(destination, 'scripts', 'codex-claude.mjs'), 'locally changed');
   assert.throws(() => execFileSync(python, args, { cwd: root, stdio: 'pipe' }), /use --replace/);
   execFileSync(python, [...args, '--replace'], { cwd: root, stdio: 'pipe' });
-  assert.deepEqual(await readFile(join(destination, 'scripts', 'cca.mjs')), oldLauncher);
+  assert.deepEqual(await readFile(join(destination, 'scripts', 'codex-claude.mjs')), oldLauncher);
   const backups = (await readdir(join(temp, 'plugins'))).filter(name => name.startsWith('claude.before-'));
   assert.equal(backups.length, 1);
-  assert.equal(await readFile(join(temp, 'plugins', backups[0], 'scripts', 'cca.mjs'), 'utf8'), 'locally changed');
+  assert.equal(await readFile(join(temp, 'plugins', backups[0], 'scripts', 'codex-claude.mjs'), 'utf8'), 'locally changed');
 });
 
 test('registration rejects marketplace ancestor links', async t => {

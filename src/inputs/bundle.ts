@@ -1,6 +1,6 @@
 import { readFile, realpath, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
-import { CcaError } from '../contracts.js';
+import { PluginError } from '../contracts.js';
 import { isUtf8 } from 'node:buffer';
 import { approvedPath, hash, within, writeJson } from '../runtime/files.js';
 import { git } from './git.js';
@@ -21,7 +21,7 @@ export async function checkoutFingerprint(cwd: string) {
 }
 export async function capture(cwdInput: string, directory: string, selection: Selection, workflow: 'decide' | 'review'): Promise<Bundle> {
   const cwd = await realpath(cwdInput);
-  if ((selection.base && selection.staged) || (selection.documents?.length && (selection.base || selection.staged || selection.paths?.length))) throw new CcaError('invalid_scope', 'Choose one of base, staged or document review. Paths filter Git review only.');
+  if ((selection.base && selection.staged) || (selection.documents?.length && (selection.base || selection.staged || selection.paths?.length))) throw new PluginError('invalid_scope', 'Choose one of base, staged or document review. Paths filter Git review only.');
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const bundle: Bundle = { version: 1, cwd, selector: selection.documents?.length ? 'documents' : selection.staged ? 'staged' : selection.base ? 'base' : 'working-tree', base: null, entries: [], omissions: [], fingerprint: '', checkoutAtCapture: await checkoutFingerprint(cwd), nothingToReview: false };
   let total = 0; let selected = 0;
@@ -42,7 +42,7 @@ export async function capture(cwdInput: string, directory: string, selection: Se
     const head = (await git(cwd, ['rev-parse', '--verify', 'HEAD'])).toString().trim();
     const selectedBase = selection.base ? (await git(cwd, ['rev-parse', '--verify', '--end-of-options', `${selection.base}^{commit}`])).toString().trim() : null;
     bundle.base = selectedBase ? (await git(cwd, ['merge-base', 'HEAD', selectedBase])).toString().trim() : head;
-    const filters = (selection.paths || []).map(p => { const abs = resolve(cwd, p); if (!within(cwd, abs)) throw new CcaError('path_denied', 'Review path is outside the repository.'); return `:(literal)${relative(cwd, abs).replaceAll('\\', '/')}`; });
+    const filters = (selection.paths || []).map(p => { const abs = resolve(cwd, p); if (!within(cwd, abs)) throw new PluginError('path_denied', 'Review path is outside the repository.'); return `:(literal)${relative(cwd, abs).replaceAll('\\', '/')}`; });
     const diffArgs = ['diff', '--no-ext-diff', '--no-textconv', '--no-renames', ...(selection.staged ? ['--cached'] : []), bundle.base, '--', ...filters];
     const names = (await git(cwd, [...diffArgs.slice(0, -filters.length - 1), '--name-only', '-z', '--', ...filters])).toString().split('\0').filter(Boolean);
     const diff = await git(cwd, diffArgs); if (diff.length) await add('selected.diff', 'diff', diff);

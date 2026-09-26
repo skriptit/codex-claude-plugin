@@ -22,7 +22,7 @@ test('official SDK query traverses its control transport through the owned spawn
         send({ type: 'control_response', response: { subtype: 'success', request_id: message.request_id, response: { commands: [], agents: [], output_style: 'default', available_output_styles: ['default'], models: [], account: {} } } });
       }
       if (message.type === 'user') {
-        send({ type: 'system', subtype: 'init', uuid: 'init', session_id: 'exact-sdk-session', model: settings.model, tools: ['Read', 'Glob', 'Grep', 'mcp__cca__ping'] });
+        send({ type: 'system', subtype: 'init', uuid: 'init', session_id: 'exact-sdk-session', model: settings.model, tools: ['Read', 'Glob', 'Grep', 'mcp__codex_claude__ping'] });
         send({ type: 'assistant', uuid: 'assistant', session_id: 'exact-sdk-session', message: { id: 'm', type: 'message', role: 'assistant', model: settings.model, content: [{ type: 'text', text: 'Fixture response' }], stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 1, output_tokens: 1 } }, parent_tool_use_id: null });
         send({ type: 'result', subtype: 'success', uuid: 'result', session_id: 'exact-sdk-session', is_error: false, result: 'Fixture response', structured_output: reply, total_cost_usd: 0, duration_ms: 1, duration_api_ms: 1, num_turns: 1, usage: {}, modelUsage: {}, permission_denials: [] });
       }

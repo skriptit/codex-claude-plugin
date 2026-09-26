@@ -3,9 +3,9 @@ name: runs
 description: Inspect saved Claude runs, live status, exact Claude replies and complete Markdown answer segments without changing run state.
 ---
 
-# Inspect CCA runs
+# Inspect Claude runs
 
-Use this plugin's `scripts/cca.mjs runs [run-id]`, resolving the plugin root two directories above this skill folder. With no ID, list saved runs; use the exact selected ID to inspect one.
+Use this plugin's `scripts/codex-claude.mjs runs [run-id]`, resolving the plugin root two directories above this skill folder. With no ID, list saved runs; use the exact selected ID to inspect one.
 
 `--round N` retrieves a completed round and `--segment N` retrieves an ordered answer segment. Preserve the returned verdict/answer wording when displaying Claude's response. Activity excerpts are explicitly marked; they are not the full transcript. Run journals and answer Markdown paths remain available locally.
 

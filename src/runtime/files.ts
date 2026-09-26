@@ -2,12 +2,12 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, open, readFile, realpath, rename, rm } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { CcaError } from '../contracts.js';
+import { PluginError } from '../contracts.js';
 
 export const hash = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 // MSIX desktop processes and unpackaged terminal processes can see different
 // physical LOCALAPPDATA directories. The profile directory is shared by both.
-export const dataRoot = () => resolve(process.env.CCA_DATA_HOME || join(process.platform === 'win32' ? join(homedir(), '.local', 'share') : process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'codex-claude-agents'));
+export const dataRoot = () => resolve(process.env.CODEX_CLAUDE_DATA_HOME || join(process.platform === 'win32' ? join(homedir(), '.local', 'share') : process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'codex-claude-plugin'));
 export async function atomicWrite(path: string, data: string) {
   await mkdir(dirname(path), { recursive: true, mode: 0o700 });
   const temp = `${path}.${randomUUID()}.tmp`;
@@ -31,7 +31,7 @@ export const within = (root: string, path: string) => { const rel = relative(roo
 export async function approvedPath(roots: string[], path: string) {
   const actual = await realpath(path);
   for (const root of roots) if (within(await realpath(root), actual)) return actual;
-  throw new CcaError('path_denied', `Path is outside the approved roots: ${path}`);
+  throw new PluginError('path_denied', `Path is outside the approved roots: ${path}`);
 }
-export const validRunId = (id: string) => { if (!/^run-[a-f0-9-]{36}$/.test(id)) throw new CcaError('invalid_run_id', 'Expected a complete CCA run ID.'); return id; };
+export const validRunId = (id: string) => { if (!/^run-[a-f0-9-]{36}$/.test(id)) throw new PluginError('invalid_run_id', 'Expected a complete plugin run ID.'); return id; };
 export const runPath = (id: string) => join(dataRoot(), 'runs', validRunId(id));

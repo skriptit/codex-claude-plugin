@@ -5,7 +5,7 @@ description: Debate a concrete decision with Claude counsel from Codex, with liv
 
 # Claude counsel
 
-Resolve this plugin's root two directories above this skill folder. Use `scripts/cca.mjs` there; do not invoke another installed plugin or repository decision skill.
+Resolve this plugin's root two directories above this skill folder. Use `scripts/codex-claude.mjs` there; do not invoke another installed plugin or repository decision skill.
 
 Read [decision coordination](../../references/decide.md) and [the forwarding contract](../../references/relay.md). Keep investigation, reasoning, answer presentation and user checkpoints in the main task. Delegate each Claude call to one forwarding subagent only.
 

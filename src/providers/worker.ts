@@ -6,7 +6,7 @@ import { readJson, writeJson } from '../runtime/files.js';
 import { identity } from '../runtime/identity.js';
 import { cliArguments, cliExecutable, providerEnvironment, sdkOptions, type TurnOptions } from './options.js';
 
-while (process.env.CCA_START_GATE && !existsSync(process.env.CCA_START_GATE)) await new Promise(r => setTimeout(r, 25));
+while (process.env.CODEX_CLAUDE_START_GATE && !existsSync(process.env.CODEX_CLAUDE_START_GATE)) await new Promise(r => setTimeout(r, 25));
 const options = await readJson<TurnOptions>(process.argv[2]!);
 const register = (pid: number, role: string) => { const id = identity(pid); if (!id) throw new Error(`Cannot register ${role}`); return writeJson(join(options.directory, `process-${pid}.json`), { ...id, role }); };
 await register(process.pid, 'provider-worker');

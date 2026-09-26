@@ -31,7 +31,7 @@ export type TurnResult = {
   reply: Reply | null; costUsd: number | null; usage: unknown;
 };
 export const schemaFor = (workflow: Workflow) => z.toJSONSchema(workflow === 'decide' ? DecisionReply : ReviewReply, { target: 'draft-7' });
-export class CcaError extends Error {
-  constructor(public readonly code: string, message: string, public readonly detail?: unknown) { super(message); this.name = 'CcaError'; }
+export class PluginError extends Error {
+  constructor(public readonly code: string, message: string, public readonly detail?: unknown) { super(message); this.name = 'PluginError'; }
 }
-export const errorInfo = (error: unknown) => error instanceof CcaError ? { code: error.code, message: error.message, detail: error.detail } : { code: 'internal_error', message: error instanceof Error ? error.message : String(error) };
+export const errorInfo = (error: unknown) => error instanceof PluginError ? { code: error.code, message: error.message, detail: error.detail } : { code: 'internal_error', message: error instanceof Error ? error.message : String(error) };

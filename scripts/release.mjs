@@ -3,7 +3,7 @@ import { lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { basename, join, parse, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const SOURCE_NAME = 'codex-claude-agents';
+const SOURCE_NAME = 'codex-claude-plugin';
 const PLUGIN_NAME = 'claude';
 const SOURCE_ROOT_FILES = [
   '.gitattributes', '.gitignore', 'LICENSE', 'README.md',
@@ -97,7 +97,7 @@ function staticPluginPaths() {
     'plugin/claude/.codex-plugin/plugin.json',
     'plugin/claude/assets/logo.png',
     ...PUBLIC_REFERENCES.map((name) => `plugin/claude/references/${name}`),
-    'plugin/claude/scripts/cca.mjs',
+    'plugin/claude/scripts/codex-claude.mjs',
     ...PUBLIC_SKILLS.map((name) => `plugin/claude/skills/${name}/SKILL.md`),
   ];
 }

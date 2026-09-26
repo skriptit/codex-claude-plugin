@@ -1,11 +1,11 @@
 ---
 name: setup
-description: Configure codex-claude-agents runtime, backend, model and effort defaults, inspect compatibility, or approve named project validation commands.
+description: Configure Claude runtime, backend, model and effort defaults, inspect compatibility, or approve named project validation commands.
 ---
 
 # Configure Claude
 
-Resolve the plugin root two directories above this skill folder and use `scripts/cca.mjs`. First run `node <launcher> setup --check --cwd <workspace>` to inspect current defaults and prerequisites. This read does not install a missing runtime or modify settings.
+Resolve the plugin root two directories above this skill folder and use `scripts/codex-claude.mjs`. First run `node <launcher> setup --check --cwd <workspace>` to inspect current defaults and prerequisites. This read does not install a missing runtime or modify settings.
 
 Apply choices already given by the user or stored in `configuration.defaults` / `resolved`. A missing runtime is not a missing backend choice: install the required runtime while preserving saved defaults. Do not ask the user to reconfirm CLI/Fable 5.1/high when those choices are already recorded. Otherwise ask only for the consequential missing choice, showing the current default or suggesting CLI/Fable 5.1/high on a first setup. CLI uses installed Claude authentication; SDK requires ANTHROPIC_API_KEY outside the repository. Never request a key in chat or copy subscription tokens into SDK configuration.
 

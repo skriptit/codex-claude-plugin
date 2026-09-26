@@ -10,7 +10,7 @@ import { Journal } from '../dist/runtime/journal.js';
 import { exclusive } from '../dist/runtime/mutex.js';
 import { approveChecks, runCheck, discoverChecks, verifyCheck } from '../dist/policy/checks.js';
 import { hash } from '../dist/runtime/files.js';
-const root = await mkdtemp(join(tmpdir(), 'cca-recovery-')); process.env.CCA_DATA_HOME = join(root, 'data');
+const root = await mkdtemp(join(tmpdir(), 'codex-claude-recovery-')); process.env.CODEX_CLAUDE_DATA_HOME = join(root, 'data');
 const fixture = fileURLToPath(new URL('./fixture-writer.mjs', import.meta.url));
 const child = (...args) => { const p = spawn(process.execPath, [fixture, ...args], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); let err = ''; p.stderr.on('data', b => err += b); return { p, done: new Promise((resolve, reject) => { p.on('error', reject); p.on('close', code => code === 0 ? resolve() : reject(new Error(err || `exit ${code}`))); }) }; };
 async function until(fn) { const end = performance.now() + 5000; while (performance.now() < end) { if (await fn()) return; await new Promise(r => setTimeout(r, 40)); } throw new Error('Timed out'); }
@@ -47,7 +47,7 @@ test('setup preserves choices and rejects invalid approvals before writing confi
   const cwd = await mkdtemp(join(root, 'setup-')); const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
   const run = (...args) => JSON.parse(execFileSync(process.execPath, [cli, 'setup', '--cwd', cwd, ...args], { encoding: 'utf8' }));
   run('--model', 'custom-choice', '--effort', 'medium'); assert.equal(run().resolved.model, 'custom-choice');
-  const before = await readFile(join(process.env.CCA_DATA_HOME, 'config.json'), 'utf8');
+  const before = await readFile(join(process.env.CODEX_CLAUDE_DATA_HOME, 'config.json'), 'utf8');
   assert.throws(() => run('--model', 'bad-write', '--approve-check', 'missing'));
-  assert.equal(await readFile(join(process.env.CCA_DATA_HOME, 'config.json'), 'utf8'), before);
+  assert.equal(await readFile(join(process.env.CODEX_CLAUDE_DATA_HOME, 'config.json'), 'utf8'), before);
 });

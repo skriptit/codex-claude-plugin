@@ -1,7 +1,7 @@
 import { mkdir, readdir, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { CcaError } from '../contracts.js';
+import { PluginError } from '../contracts.js';
 import { alive, identity, type Identity } from './identity.js';
 import { readJson, writeJson } from './files.js';
 
@@ -11,7 +11,7 @@ type Ticket = { owner: Identity; number: number; choosing: boolean };
 // including a writer interrupted while choosing. There is no stale-lock stealing.
 export async function exclusive<T>(directory: string, action: () => Promise<T>): Promise<T> {
   await mkdir(directory, { recursive: true, mode: 0o700 });
-  const owner = identity(); if (!owner) throw new CcaError('identity_unavailable', 'Cannot establish lock ownership.');
+  const owner = identity(); if (!owner) throw new PluginError('identity_unavailable', 'Cannot establish lock ownership.');
   const name = `${randomUUID()}.ticket.json`; const path = join(directory, name);
   const mine: Ticket = { owner, number: 0, choosing: true };
   const tickets = async () => {
@@ -19,7 +19,7 @@ export async function exclusive<T>(directory: string, action: () => Promise<T>):
     for (const file of await readdir(directory)) if (file.endsWith('.ticket.json') && file !== name) {
       try {
         const ticket = await readJson<Ticket>(join(directory, file));
-        if (!ticket.owner || !Number.isSafeInteger(ticket.number) || ticket.number < 0 || typeof ticket.choosing !== 'boolean') throw new CcaError('lock_corrupt', 'Invalid lock ticket.');
+        if (!ticket.owner || !Number.isSafeInteger(ticket.number) || ticket.number < 0 || typeof ticket.choosing !== 'boolean') throw new PluginError('lock_corrupt', 'Invalid lock ticket.');
         if (alive(ticket.owner)) found.push({ name: file, ticket });
       } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
     }
@@ -33,7 +33,7 @@ export async function exclusive<T>(directory: string, action: () => Promise<T>):
     for (;;) {
       const others = await tickets();
       if (!others.some(t => t.ticket.choosing || t.ticket.number < mine.number || (t.ticket.number === mine.number && t.name < name))) break;
-      if (performance.now() >= deadline) throw new CcaError('run_busy', 'Another process is committing state.');
+      if (performance.now() >= deadline) throw new PluginError('run_busy', 'Another process is committing state.');
       await new Promise(r => setTimeout(r, 30));
     }
     return await action();

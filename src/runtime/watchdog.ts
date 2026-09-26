@@ -9,7 +9,7 @@ const spec = await readJson<Launch>(process.argv[2]!);
 if (!alive(spec.owner) || existsSync(spec.cancel)) process.exit(130);
 // The worker belongs to its own group. The watchdog stays outside so it can
 // terminate the whole group after the worker or an intermediate parent exits.
-const child = spawn(process.execPath, [fileURLToPath(new URL('./command-worker.js', import.meta.url)), process.argv[2]!], { cwd: spec.cwd, detached: true, stdio: ['ignore', 'inherit', 'inherit'], env: { ...process.env, CCA_START_GATE: `${spec.registry}.go` } });
+const child = spawn(process.execPath, [fileURLToPath(new URL('./command-worker.js', import.meta.url)), process.argv[2]!], { cwd: spec.cwd, detached: true, stdio: ['ignore', 'inherit', 'inherit'], env: { ...process.env, CODEX_CLAUDE_START_GATE: `${spec.registry}.go` } });
 const worker = child.pid ? identity(child.pid) : null;
 if (!worker) { child.kill('SIGKILL'); throw new Error('Cannot establish worker identity'); }
 await writeJson(spec.registry, { ...worker, role: 'worker' });

@@ -1,5 +1,5 @@
 {
-  "name": "codex-claude-agents",
+  "name": "codex-claude-plugin",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -15,7 +15,7 @@
   "description": "Claude counsel and combined reviews in native Codex workflows",
   "type": "module",
   "engines": { "node": ">=24 <25" },
-  "bin": { "cca": "dist/cli.js" },
+  "bin": { "codex-claude": "dist/cli.js" },
   "scripts": {
     "build": "tsc && node scripts/copy-assets.mjs",
     "typecheck": "tsc --noEmit",

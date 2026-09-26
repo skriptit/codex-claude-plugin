@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { appendFile } from 'node:fs/promises';
-import { CcaError, type Activity } from '../contracts.js';
+import { PluginError, type Activity } from '../contracts.js';
 import { writeJson } from '../runtime/files.js';
 import { contained } from '../runtime/containment.js';
 import { preflight, type TurnOptions } from './options.js';
@@ -21,7 +21,7 @@ export async function runProvider(options: TurnOptions, onActivity: (activity: A
   await writes;
   const result = parser.finish(exitCode, signal?.aborted);
   await writeJson(join(options.directory, 'result.json'), result);
-  if (!parser.tools.includes('Read') || !parser.tools.includes('Grep') || !parser.tools.includes('Glob') || !parser.tools.includes('mcp__cca__ping')) {
+  if (!parser.tools.includes('Read') || !parser.tools.includes('Grep') || !parser.tools.includes('Glob') || !parser.tools.includes('mcp__codex_claude__ping')) {
     if (result.status === 'completed') { result.status = 'failed'; result.code = 'tool_capability_missing'; result.message = 'Provider did not expose the required read/search/MCP tools.'; result.reply = null; }
   }
   if (result.status === 'outcome_unknown' && diagnostics) result.message = `${result.message}\n${diagnostics}`;
@@ -29,4 +29,4 @@ export async function runProvider(options: TurnOptions, onActivity: (activity: A
   if (result.code === 'tool_capability_missing') onActivity({ type: 'status', text: result.message! });
   return result;
 }
-export function requireCompleted(result: Awaited<ReturnType<typeof runProvider>>) { if (result.status !== 'completed') throw new CcaError(result.code || result.status, result.message || 'Provider did not complete.', result); return result; }
+export function requireCompleted(result: Awaited<ReturnType<typeof runProvider>>) { if (result.status !== 'completed') throw new PluginError(result.code || result.status, result.message || 'Provider did not complete.', result); return result; }

@@ -20,7 +20,7 @@ RUNTIME_FIXED = {
     "bundle.json", "package.json", "package-lock.json", "LICENSE", "THIRD_PARTY_NOTICES.md"
 }
 PLUGIN_FIXED = {
-    ".codex-plugin/plugin.json", "assets/logo.png", "scripts/cca.mjs", "LICENSE", "THIRD_PARTY_NOTICES.md"
+    ".codex-plugin/plugin.json", "assets/logo.png", "scripts/codex-claude.mjs", "LICENSE", "THIRD_PARTY_NOTICES.md"
 }
 
 

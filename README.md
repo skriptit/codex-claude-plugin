@@ -17,7 +17,7 @@ codex plugin add claude@skriptit-claude
 
 Start a new Codex task so it loads the skills, then run `$claude:setup`.
 
-For a manual source or ZIP installation, register the plugin in your personal marketplace. Clone [the source repository](https://github.com/skriptit/codex-claude-plugin) or extract `codex-claude-agents-source.zip` to a `codex-claude-agents/` directory. From that directory, build and register it:
+For a manual source or ZIP installation, register the plugin in your personal marketplace. Clone [the source repository](https://github.com/skriptit/codex-claude-plugin) or extract `codex-claude-plugin-source.zip` to a `codex-claude-plugin/` directory. From that directory, build and register it:
 
 ```sh
 npm ci --ignore-scripts
@@ -32,8 +32,6 @@ python register-personal.py --source claude
 ```
 
 After either manual route, install `claude@personal` in Codex, start a new task, then run `$claude:setup`. Registration changes your local personal marketplace. To update an existing plugin directory, rerun registration with `--replace`; the helper backs up that directory first. Setup installs the packaged runtime into a versioned per-user directory and stores configuration outside the repository. Run `$claude:setup --check` for a read-only prerequisite and configuration check; it does not install a missing runtime or test a live Claude call.
-
-The public command prefix is `claude:`. Internal launcher, environment, and saved-run identifiers still use `cca` for compatibility.
 
 ## Use
 
@@ -68,10 +66,10 @@ Run state, reviewed inputs, Claude answers, and check output can contain private
 
 | Host | Default data directory |
 |---|---|
-| Windows | `%USERPROFILE%\.local\share\codex-claude-agents` |
-| macOS/Linux | `$XDG_DATA_HOME/codex-claude-agents`, otherwise `~/.local/share/codex-claude-agents` |
+| Windows | `%USERPROFILE%\.local\share\codex-claude-plugin` |
+| macOS/Linux | `$XDG_DATA_HOME/codex-claude-plugin`, otherwise `~/.local/share/codex-claude-plugin` |
 
-`CCA_DATA_HOME` selects another local filesystem directory. The plugin does not automatically migrate data between roots. `CCA_CLAUDE_PATH` selects an installed Claude executable. Local filesystems with atomic rename semantics are required; network shares are unsupported.
+`CODEX_CLAUDE_DATA_HOME` selects another local filesystem directory. The plugin does not automatically migrate data between roots. `CODEX_CLAUDE_PATH` selects an installed Claude executable. Local filesystems with atomic rename semantics are required; network shares are unsupported.
 
 Claude receives scoped read and web tools plus the plugin's evidence and approved-check tools. Project checks execute real project code with the host user's authority and may create artifacts; they are not an operating-system sandbox. `$claude:setup --project` presents exact check definitions for approval. Changed definitions require renewed approval. Codex and Claude host permissions and managed restrictions still apply.
 
@@ -84,6 +82,6 @@ npm test
 npm run release
 ```
 
-`npm run release` builds three archives in `release/`: `codex-claude-agents-source.zip` contains buildable source; `claude-plugin.zip` contains the ready-built plugin, install README, and registration helper; `claude-marketplace.zip` is a plugin-only bundle under one top-level `claude/` directory. Type checking and tests are deterministic and do not establish authenticated provider or native host behavior. `npm run smoke -- cli` and `npm run smoke -- sdk` make real provider calls; run them only with the corresponding credentials and environment. Authenticated SDK operation, macOS/Linux process lifecycle, and native host interface behavior require validation in those environments before making platform-wide claims.
+`npm run release` builds three archives in `release/`: `codex-claude-plugin-source.zip` contains buildable source; `claude-plugin.zip` contains the ready-built plugin, install README, and registration helper; `claude-marketplace.zip` is a plugin-only bundle under one top-level `claude/` directory. Type checking and tests are deterministic and do not establish authenticated provider or native host behavior. `npm run smoke -- cli` and `npm run smoke -- sdk` make real provider calls; run them only with the corresponding credentials and environment. Authenticated SDK operation, macOS/Linux process lifecycle, and native host interface behavior require validation in those environments before making platform-wide claims.
 
 See [architecture](docs/architecture.md) and [troubleshooting](docs/troubleshooting.md). Report problems through [GitHub Issues](https://github.com/skriptit/codex-claude-plugin/issues). Released under the [MIT License](LICENSE); dependency notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -1,6 +1,6 @@
 import { open, readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { CcaError } from '../contracts.js';
+import { PluginError } from '../contracts.js';
 import { atomicWrite, dataRoot, runPath, writeJson } from './files.js';
 import { exclusive } from './mutex.js';
 
@@ -20,7 +20,7 @@ export class Journal {
         if (event.seq !== events.length + 1 || typeof event.type !== 'string') throw new Error('sequence');
         events.push(event);
       } catch {
-        if (i !== lines.length - 1) throw new CcaError('journal_corrupt', `Invalid event ${i + 1}`);
+        if (i !== lines.length - 1) throw new PluginError('journal_corrupt', `Invalid event ${i + 1}`);
         tornTail = true;
       }
     }

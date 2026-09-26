@@ -10,9 +10,9 @@ import { spawn } from 'node:child_process';
 const plugin = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const bundle = join(plugin, 'runtime');
 // Keep packaged desktop and unpackaged CLI processes on the same physical root.
-const root = resolve(process.env.CCA_DATA_HOME || join(process.platform === 'win32' ? join(homedir(), '.local', 'share') : process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'codex-claude-agents'));
+const root = resolve(process.env.CODEX_CLAUDE_DATA_HOME || join(process.platform === 'win32' ? join(homedir(), '.local', 'share') : process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'codex-claude-plugin'));
 try {
-  if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('CCA requires Node.js 24 LTS.');
+  if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('Codex Claude Plugin requires Node.js 24 LTS.');
   const manifest = JSON.parse(await readFile(join(bundle, 'bundle.json'), 'utf8'));
   if (!/^\d+\.\d+\.\d+$/.test(manifest.version)) throw new Error('Invalid runtime version');
   const actualDigest = createHash('sha256').update(JSON.stringify(manifest.files)).digest('hex');
@@ -37,7 +37,7 @@ try {
       const candidates = [process.env.npm_execpath, join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'), join(dirname(process.execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js')].filter(Boolean);
       let npm; for (const candidate of candidates) { try { await access(candidate); npm = candidate; break; } catch {} }
       if (!npm) throw new Error('npm CLI not found beside Node. Install Node.js 24 LTS with npm.');
-      process.stderr.write('[cca:progress] {"type":"status","text":"Installing the versioned CCA runtime with locked dependencies."}\n');
+      process.stderr.write('[claude:progress] {"type":"status","text":"Installing the versioned plugin runtime with locked dependencies."}\n');
       const child = spawn(process.execPath, [npm, 'ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: staging, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
       child.stdout.pipe(process.stderr); child.stderr.pipe(process.stderr);
       const exit = await new Promise((done, fail) => { child.on('error', fail); child.on('close', done); });

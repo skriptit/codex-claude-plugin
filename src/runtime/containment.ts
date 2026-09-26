@@ -3,13 +3,13 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { CcaError } from '../contracts.js';
+import { PluginError } from '../contracts.js';
 import { identity, type Identity } from './identity.js';
 import { writeJson } from './files.js';
 
 export type Launch = { command: string; args: string[]; cwd: string; owner: Identity; cancel: string; registry: string };
 export async function contained(options: { command: string; args: string[]; cwd: string; directory: string; env?: NodeJS.ProcessEnv; onStdout: (data: string) => void; onStderr: (data: string) => void; signal?: AbortSignal }) {
-  const owner = identity(); if (!owner) throw new CcaError('identity_unavailable', 'Cannot establish process ownership.');
+  const owner = identity(); if (!owner) throw new PluginError('identity_unavailable', 'Cannot establish process ownership.');
   await mkdir(options.directory, { recursive: true, mode: 0o700 });
   const token = randomUUID(); const cancel = join(options.directory, `${token}.cancel`);
   const launch: Launch = { command: options.command, args: options.args, cwd: options.cwd, owner, cancel, registry: join(options.directory, `${token}.worker.json`) };

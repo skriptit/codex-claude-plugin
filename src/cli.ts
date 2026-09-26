@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import { Backend, CcaError, Effort, errorInfo, type Settings } from './contracts.js';
+import { Backend, PluginError, Effort, errorInfo, type Settings } from './contracts.js';
 import { configure, loadConfig, resolveSettings } from './runtime/config.js';
 import { dataRoot, readJson } from './runtime/files.js';
 import { listRuns } from './runtime/journal.js';
@@ -14,7 +14,7 @@ import { answerCheckpoint, assess, cancel, createRun, inspect, raiseBudget, read
 import { Progress } from './presentation/render.js';
 
 const help = {
-  name: 'codex-claude-agents', namespace: 'cca',
+  name: 'codex-claude-plugin', namespace: 'claude',
   commands: ['setup [--project] [--check]', 'decide <question> --brief-file <json>', 'review [focus]', 'runs [run-id] [--round N] [--segment N]', 'resume <run-id> [--retry] [--brief-file <json>]', 'cancel <run-id>'],
   runOptions: ['--backend cli|sdk', '--model ID', '--effort low|medium|high|xhigh|max', '--budget-usd AMOUNT', '--spec PATH_OR_URL', '--standards PATH_OR_URL'],
   reviewOptions: ['--base REF', '--staged', '--path PATH', '--document PATH'],
@@ -29,8 +29,8 @@ const spec = {
   'checkpoint-id': { type: 'string' }, answer: { type: 'string' }, round: { type: 'string' }, segment: { type: 'string' }, retry: { type: 'boolean' },
   'linked-from': { type: 'string' }, 'receipt-only': { type: 'boolean' }, 'raw-segment': { type: 'string' }, help: { type: 'boolean', short: 'h' }, json: { type: 'boolean' },
 } as const;
-const number = (value: string | undefined) => { if (value === undefined) return undefined; const n = Number(value); if (!Number.isFinite(n) || n <= 0) throw new CcaError('invalid_number', `Expected a positive number: ${value}`); return n; };
-const integer = (value: string | undefined) => { const n = number(value); if (n !== undefined && !Number.isSafeInteger(n)) throw new CcaError('invalid_number', 'Expected a positive integer.'); return n; };
+const number = (value: string | undefined) => { if (value === undefined) return undefined; const n = Number(value); if (!Number.isFinite(n) || n <= 0) throw new PluginError('invalid_number', `Expected a positive number: ${value}`); return n; };
+const integer = (value: string | undefined) => { const n = number(value); if (n !== undefined && !Number.isSafeInteger(n)) throw new PluginError('invalid_number', 'Expected a positive integer.'); return n; };
 async function main() {
   const parsed = parseArgs({ options: spec, allowPositionals: true, strict: true }); const v = parsed.values; const [command, ...args] = parsed.positionals;
   if (!command || v.help) return help;
@@ -51,12 +51,12 @@ async function main() {
       }
       const workflow = v.workflow ? z.enum(['decide', 'review']).parse(v.workflow) : undefined;
       const settings = overrides;
-      if ((v['approve-check']?.length || v['checks-file']) && !v.project) throw new CcaError('project_required', 'Check approvals require setup --project.');
-      if (v['approve-check']?.length && v['checks-file']) throw new CcaError('invalid_setup', 'Use discovered check names or a checks file, not both.');
+      if ((v['approve-check']?.length || v['checks-file']) && !v.project) throw new PluginError('project_required', 'Check approvals require setup --project.');
+      if (v['approve-check']?.length && v['checks-file']) throw new PluginError('invalid_setup', 'Use discovered check names or a checks file, not both.');
       let approved: CheckDefinition[] | undefined;
       if (v['approve-check']?.length) {
         const candidates = await discoverChecks(cwd); const requested = v['approve-check'];
-        if (requested.some(name => !candidates.some(c => c.id === name))) throw new CcaError('unknown_check', 'An approval names a check that was not discovered.');
+        if (requested.some(name => !candidates.some(c => c.id === name))) throw new PluginError('unknown_check', 'An approval names a check that was not discovered.');
         const previous = await approvedChecks(cwd); approved = [...previous.filter(c => !requested.includes(c.id)), ...candidates.filter(c => requested.includes(c.id))];
       }
       if (v['checks-file']) approved = z.array(Check).parse(await readJson(v['checks-file']));
@@ -70,22 +70,22 @@ async function main() {
       catch (error) { return { id: runId, status: 'unreadable', ...errorInfo(error) }; }
     }));
     if (command === 'review' || command === 'decide') {
-      if (command === 'decide' && !v['brief-file']) throw new CcaError('brief_required', 'Codex must supply its independent decision brief with --brief-file.');
+      if (command === 'decide' && !v['brief-file']) throw new PluginError('brief_required', 'Codex must supply its independent decision brief with --brief-file.');
       if (id && v.run) {
-        if (Object.keys(overrides).length) throw new CcaError('settings_frozen', 'Run settings are frozen; use resume to raise a budget or start a linked run.');
-        if (v.base || v.staged || v.path || v.document || v.spec || v.standards || args.length) throw new CcaError('scope_frozen', 'Existing runs use their immutable saved inputs. Start a linked run to change scope.');
+        if (Object.keys(overrides).length) throw new PluginError('settings_frozen', 'Run settings are frozen; use resume to raise a budget or start a linked run.');
+        if (v.base || v.staged || v.path || v.document || v.spec || v.standards || args.length) throw new PluginError('scope_frozen', 'Existing runs use their immutable saved inputs. Start a linked run to change scope.');
         return await turn(id);
       }
       const brief = command === 'decide' ? await readBrief(v['brief-file']!) : null;
       const question = args.join(' ') || brief?.question || 'Review selected changes through adversarial, specification and standards lenses.';
       const state = await createRun({ workflow: command, cwd, question, settings: overrides, selection: { base: v.base, staged: v.staged, paths: v.path, documents: v.document, specs: v.spec, standards: v.standards }, linkedFrom: v['linked-from'] });
-      process.stderr.write(`[cca:progress] ${JSON.stringify({ type: 'status', text: `Started ${state.id}: ${state.settings.backend}, ${state.settings.model}, requested effort ${state.settings.effort}.`, runId: state.id })}\n`);
+      process.stderr.write(`[claude:progress] ${JSON.stringify({ type: 'status', text: `Started ${state.id}: ${state.settings.backend}, ${state.settings.model}, requested effort ${state.settings.effort}.`, runId: state.id })}\n`);
       if (state.bundle.nothingToReview) return { run: state, message: 'Nothing to review.' };
       return await turn(state.id);
     }
-    if (!id) throw new CcaError('run_required', 'Supply an exact run ID.');
+    if (!id) throw new PluginError('run_required', 'Supply an exact run ID.');
     if (command === 'resume') {
-      if (overrides.backend || overrides.model || overrides.effort) throw new CcaError('settings_frozen', 'Use a new linked run to change backend, model or effort.');
+      if (overrides.backend || overrides.model || overrides.effort) throw new PluginError('settings_frozen', 'Use a new linked run to change backend, model or effort.');
       if (overrides.budgetUsd !== undefined) await raiseBudget(id, overrides.budgetUsd);
       const state = await inspect(id);
       if (state.effectiveStatus === 'running') return { run: state, message: 'Run is active; inspect its saved activity or cancel it. No new execution started.' };
@@ -94,15 +94,15 @@ async function main() {
     }
     if (command === 'cancel') return cancel(id);
     if (command === 'assess') {
-      if (!v['assessment-file']) throw new CcaError('assessment_required', 'Supply --assessment-file.');
+      if (!v['assessment-file']) throw new PluginError('assessment_required', 'Supply --assessment-file.');
       const schema = z.object({ requestId: z.string().uuid(), agree: z.boolean(), proposalHash: z.string().length(64), answer: z.string().min(1), reason: z.string().min(1), cost: z.string().min(1), falsifier: z.string().min(1) });
       return assess(id, schema.parse(JSON.parse(await readFile(v['assessment-file'], 'utf8'))), expectedRevision);
     }
     if (command === 'checkpoint') {
-      if (!v['checkpoint-id']) throw new CcaError('checkpoint_required', 'Supply the exact pending checkpoint ID.');
+      if (!v['checkpoint-id']) throw new PluginError('checkpoint_required', 'Supply the exact pending checkpoint ID.');
       return answerCheckpoint(id, v['checkpoint-id'], z.enum(['continue', 'stop']).parse(v.answer), expectedRevision);
     }
-    throw new CcaError('unknown_command', `Unknown command ${command}`);
+    throw new PluginError('unknown_command', `Unknown command ${command}`);
   } finally { progress.flush(); process.removeListener('SIGINT', stop); process.removeListener('SIGTERM', stop); }
 }
 try { const output = await main(); process.stdout.write(JSON.stringify(output) + '\n'); if (output && typeof output === 'object' && 'status' in output && ['failed', 'interrupted', 'outcome_unknown'].includes(String(output.status))) process.exitCode = 1; }

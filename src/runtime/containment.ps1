@@ -8,7 +8,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-public static class CcaJob {
+public static class CodexClaudeJob {
   [StructLayout(LayoutKind.Sequential)] struct STARTUPINFO {
     public int cb; public string reserved, desktop, title;
     public int x,y,xsize,ysize,xchars,ychars,fill,flags;
@@ -74,6 +74,6 @@ public static class CcaJob {
 }
 '@
 try {
-  $code = [CcaJob]::Run($s.command, [string[]]$s.args, $s.cwd, [int]$s.owner.pid, [string]$s.owner.start, $s.cancel, $s.registry)
+  $code = [CodexClaudeJob]::Run($s.command, [string[]]$s.args, $s.cwd, [int]$s.owner.pid, [string]$s.owner.start, $s.cancel, $s.registry)
   exit $code
 } catch { [Console]::Error.WriteLine($_.Exception.Message); exit 70 }

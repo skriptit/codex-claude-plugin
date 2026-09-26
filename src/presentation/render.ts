@@ -34,7 +34,7 @@ export class Progress {
     this.flush();
     if (activity.type === 'tool_start' && activity.id) { if (this.seenTools.has(activity.id)) return; this.seenTools.add(activity.id); }
     const preview = activity.detail === undefined || activity.type === 'usage' ? '' : JSON.stringify(activity.detail).slice(0, 700);
-    this.output(`[cca:progress] ${JSON.stringify({ type: activity.type, text: activity.text, ...(activity.id ? { id: activity.id } : {}), ...(preview ? { preview } : {}) })}\n`);
+    this.output(`[claude:progress] ${JSON.stringify({ type: activity.type, text: activity.text, ...(activity.id ? { id: activity.id } : {}), ...(preview ? { preview } : {}) })}\n`);
   }
-  flush() { if (this.timer) clearTimeout(this.timer); this.timer = null; if (this.fragments) { this.output(`[cca:progress] ${JSON.stringify({ type: 'text', text: this.fragments })}\n`); this.fragments = ''; } }
+  flush() { if (this.timer) clearTimeout(this.timer); this.timer = null; if (this.fragments) { this.output(`[claude:progress] ${JSON.stringify({ type: 'text', text: this.fragments })}\n`); this.fragments = ''; } }
 }
