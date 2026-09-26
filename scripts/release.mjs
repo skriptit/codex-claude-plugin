@@ -16,7 +16,7 @@ const PUBLIC_SCRIPTS = [
   'release.mjs', 'smoke.mjs',
 ];
 const PUBLIC_REFERENCES = ['decide.md', 'relay.md', 'selection.md'];
-const PUBLIC_SKILLS = ['cancel', 'decide', 'resume', 'review', 'runs', 'setup'];
+const PUBLIC_SKILLS = ['agent', 'cancel', 'decide', 'resume', 'review', 'runs', 'setup'];
 const GENERATED_PLUGIN_FILES = ['LICENSE', 'THIRD_PARTY_NOTICES.md'];
 const PUBLIC_SOURCE = [
   'cli.ts', 'contracts.ts', 'inputs/bundle.ts', 'inputs/git.ts',
@@ -25,7 +25,7 @@ const PUBLIC_SOURCE = [
   'runtime/command-worker.ts', 'runtime/config.ts', 'runtime/containment.ps1',
   'runtime/containment.ts', 'runtime/files.ts', 'runtime/identity.ts',
   'runtime/journal.ts', 'runtime/mutex.ts', 'runtime/watchdog.ts',
-  'workflows/engine.ts', 'workflows/state.ts',
+  'workflows/agents.ts', 'workflows/engine.ts', 'workflows/state.ts',
 ];
 const PUBLIC_TESTS = [
   'adapter.test.mjs', 'bootstrap.test.mjs', 'core.test.mjs',

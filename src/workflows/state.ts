@@ -3,10 +3,11 @@ import type { Settings, TurnResult, Workflow } from '../contracts.js';
 import type { Bundle, Selection } from '../inputs/bundle.js';
 import type { Identity } from '../runtime/identity.js';
 import type { Event } from '../runtime/journal.js';
+import type { CustomAgent } from './agents.js';
 
 export const Brief = z.object({ question: z.string().min(1), proposal: z.string().min(1), reason: z.string().min(1), cost: z.string().min(1), falsifier: z.string().min(1), alternatives: z.array(z.string()).default([]), constraints: z.array(z.string()).default([]), evidence: z.array(z.string()).default([]), responseToCounsel: z.string().optional() });
 export type CounselBrief = z.infer<typeof Brief>;
-export type RunCreated = { id: string; workflow: Workflow; cwd: string; settings: Settings; question: string; selection: Selection; bundle: Bundle; hostTaskId: string | null; linkedFrom: string | null; runtimeEntrypoint: string };
+export type RunCreated = { id: string; workflow: Workflow; cwd: string; settings: Settings; question: string; selection: Selection; bundle: Bundle; agent: CustomAgent | null; hostTaskId: string | null; linkedFrom: string | null; runtimeEntrypoint: string };
 export type Request = { id: string; round: number; attempt: number; brief: CounselBrief | null; proposalHash: string | null; owner: Identity; directory: string };
 export type Assessment = { requestId: string; agree: boolean; proposalHash: string; answer: string; reason: string; cost: string; falsifier: string };
 export type RunState = RunCreated & { revision: number; status: 'ready' | 'running' | 'awaiting_lead' | 'awaiting_user' | 'agreed' | 'stopped' | 'completed' | 'interrupted' | 'failed' | 'outcome_unknown'; completedRounds: number; attempts: number; active: Request | null; lastRequest: Request | null; lastResult: TurnResult | null; sessionId: string | null; checkpoint: { id: string; question: string; afterRound: number } | null; spentUsd: number; costUnknown: boolean };

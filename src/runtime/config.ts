@@ -5,7 +5,7 @@ import { Defaults, type Settings, type Workflow } from '../contracts.js';
 import { dataRoot, hash, readJson, writeJson } from './files.js';
 import { exclusive } from './mutex.js';
 
-const Layer = z.object({ defaults: Defaults.partial().default({}), workflows: z.object({ decide: Defaults.partial().optional(), review: Defaults.partial().optional() }).default({}) });
+const Layer = z.object({ defaults: Defaults.partial().default({}), workflows: z.object({ decide: Defaults.partial().optional(), review: Defaults.partial().optional(), agent: Defaults.partial().optional() }).default({}) });
 const Config = Layer.extend({ version: z.literal(1), projects: z.record(z.string(), Layer).default({}) });
 export type Configuration = z.infer<typeof Config>;
 export async function loadConfig(): Promise<Configuration> {

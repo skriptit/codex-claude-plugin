@@ -12,7 +12,7 @@
   "bugs": {
     "url": "https://github.com/skriptit/codex-claude-plugin/issues"
   },
-  "description": "Claude counsel and combined reviews in native Codex workflows",
+  "description": "Run built-in and custom Claude agents inside Codex",
   "type": "module",
   "engines": { "node": ">=24 <25" },
   "bin": { "codex-claude": "dist/cli.js" },

@@ -15,7 +15,7 @@ import { Progress } from './presentation/render.js';
 
 const help = {
   name: 'codex-claude-plugin', namespace: 'claude',
-  commands: ['setup [--project] [--check]', 'decide <question> --brief-file <json>', 'review [focus]', 'runs [run-id] [--round N] [--segment N]', 'resume <run-id> [--retry] [--brief-file <json>]', 'cancel <run-id>'],
+  commands: ['setup [--project] [--check]', 'decide <question> --brief-file <json>', 'review [focus]', 'agent <name> <task> [--document PATH]', 'runs [run-id] [--round N] [--segment N]', 'resume <run-id> [--retry] [--brief-file <json>]', 'cancel <run-id>'],
   runOptions: ['--backend cli|sdk', '--model ID', '--effort low|medium|high|xhigh|max', '--budget-usd AMOUNT', '--spec PATH_OR_URL', '--standards PATH_OR_URL'],
   reviewOptions: ['--base REF', '--staged', '--path PATH', '--document PATH'],
   coordination: ['assess RUN --assessment-file JSON --expected-revision N', 'checkpoint RUN --checkpoint-id ID --answer continue|stop --expected-revision N'],
@@ -45,11 +45,11 @@ async function main() {
   try {
     if (command === 'setup') {
       if (v.check) {
-        const settings = await resolveSettings(cwd, v.workflow === 'review' ? 'review' : 'decide', overrides);
+        const settings = await resolveSettings(cwd, v.workflow === 'review' ? 'review' : v.workflow === 'agent' ? 'agent' : 'decide', overrides);
         let provider; try { provider = preflight(settings); } catch (error) { provider = errorInfo(error); }
         return { dataRoot: dataRoot(), runtime, configuration: await loadConfig(), resolved: settings, provider, approvedChecks: await approvedChecks(cwd), candidateChecks: await discoverChecks(cwd), changed: false };
       }
-      const workflow = v.workflow ? z.enum(['decide', 'review']).parse(v.workflow) : undefined;
+      const workflow = v.workflow ? z.enum(['decide', 'review', 'agent']).parse(v.workflow) : undefined;
       const settings = overrides;
       if ((v['approve-check']?.length || v['checks-file']) && !v.project) throw new PluginError('project_required', 'Check approvals require setup --project.');
       if (v['approve-check']?.length && v['checks-file']) throw new PluginError('invalid_setup', 'Use discovered check names or a checks file, not both.');
@@ -69,6 +69,16 @@ async function main() {
       try { const state = await inspect(runId); return { id: runId, workflow: state.workflow, question: state.question, status: state.effectiveStatus, rounds: state.completedRounds, revision: state.revision }; }
       catch (error) { return { id: runId, status: 'unreadable', ...errorInfo(error) }; }
     }));
+    if (command === 'agent') {
+      const [agentName, ...taskParts] = args;
+      const task = taskParts.join(' ').trim();
+      if (!agentName || !task) throw new PluginError('agent_task_required', 'Supply an agent name and a task.');
+      if (v.base || v.staged || v.path) throw new PluginError('invalid_scope', 'Custom agents accept --document, --spec and --standards; Git review selectors belong to review.');
+      if (v.run || v['brief-file']) throw new PluginError('invalid_agent_run', 'Use resume with an exact run ID to continue an existing agent attempt.');
+      const state = await createRun({ workflow: 'agent', agentName, cwd, question: task, settings: overrides, selection: { documents: v.document, specs: v.spec, standards: v.standards }, linkedFrom: v['linked-from'] });
+      process.stderr.write(`[claude:progress] ${JSON.stringify({ type: 'status', text: `Started ${state.id}: agent ${agentName}, ${state.settings.backend}, ${state.settings.model}, requested effort ${state.settings.effort}.`, runId: state.id })}\n`);
+      return await turn(state.id);
+    }
     if (command === 'review' || command === 'decide') {
       if (command === 'decide' && !v['brief-file']) throw new PluginError('brief_required', 'Codex must supply its independent decision brief with --brief-file.');
       if (id && v.run) {

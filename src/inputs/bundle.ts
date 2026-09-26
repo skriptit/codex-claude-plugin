@@ -19,11 +19,12 @@ export async function checkoutFingerprint(cwd: string) {
     return hash(JSON.stringify({ head, diff: hash(diff), index: hash(index), untracked }));
   } catch { return null; }
 }
-export async function capture(cwdInput: string, directory: string, selection: Selection, workflow: 'decide' | 'review'): Promise<Bundle> {
+export async function capture(cwdInput: string, directory: string, selection: Selection, workflow: 'decide' | 'review' | 'agent'): Promise<Bundle> {
   const cwd = await realpath(cwdInput);
   if ((selection.base && selection.staged) || (selection.documents?.length && (selection.base || selection.staged || selection.paths?.length))) throw new PluginError('invalid_scope', 'Choose one of base, staged or document review. Paths filter Git review only.');
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const bundle: Bundle = { version: 1, cwd, selector: selection.documents?.length ? 'documents' : selection.staged ? 'staged' : selection.base ? 'base' : 'working-tree', base: null, entries: [], omissions: [], fingerprint: '', checkoutAtCapture: await checkoutFingerprint(cwd), nothingToReview: false };
+  if (workflow === 'agent' && !selection.documents?.length) bundle.selector = 'live-project';
   let total = 0; let selected = 0;
   async function add(source: string, kind: string, data: Buffer) {
     if (data.includes(0) || !isUtf8(data) || data.length > 2 * 1024 * 1024 || total + data.length > 16 * 1024 * 1024) { bundle.omissions.push({ source, reason: data.includes(0) || !isUtf8(data) ? 'Binary or non-UTF-8 content' : 'Input size limit; coverage is incomplete' }); return; }

@@ -1,4 +1,4 @@
-import { DecisionReply, Effort, ReviewReply, type Activity, type Settings, type TurnResult, type Workflow } from '../contracts.js';
+import { AgentReply, DecisionReply, Effort, ReviewReply, type Activity, type Settings, type TurnResult, type Workflow } from '../contracts.js';
 
 type Obj = Record<string, unknown>;
 const object = (value: unknown): Obj => value !== null && typeof value === 'object' ? value as Obj : {};
@@ -113,7 +113,7 @@ export class StreamNormalizer {
     if (this.effortProblem || (this.effort && this.effort !== this.settings.effort)) return fail('effort_mismatch', 'Provider reported a different or unrecognized effective effort.');
     if (terminal.subtype !== 'success' || terminal.is_error === true) return fail(string(terminal.subtype) || 'provider_failed', array(terminal.errors).map(String).join('\n') || string(terminal.result) || 'Provider returned a failure.');
     if (exitCode !== 0) return fail('transport_failed', `Provider process exited with code ${exitCode}.`);
-    const parsed = (this.workflow === 'decide' ? DecisionReply : ReviewReply).safeParse(terminal.structured_output);
+    const parsed = (this.workflow === 'decide' ? DecisionReply : this.workflow === 'review' ? ReviewReply : AgentReply).safeParse(terminal.structured_output);
     if (!parsed.success) return fail('invalid_structured_output', 'Terminal success did not contain a valid structured reply.');
     return Object.assign(result, { status: 'completed', code: null, message: null, reply: parsed.data });
   }

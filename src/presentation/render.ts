@@ -16,10 +16,10 @@ export function answerSegments(answer: string, limit = 12_000): string[] {
   if (segments.join('') !== answer) throw new Error('Answer segmentation lost content');
   return segments;
 }
-export function renderRound(round: number, backend: string, result: TurnResult) {
+export function renderRound(round: number, backend: string, result: TurnResult, agentName?: string) {
   if (result.status !== 'completed' || !result.reply) return { label: `Claude · Attempt for round ${round} · ${result.status}`, verdict: null, answer: null, answerSegments: [], markdown: `**Claude · ${result.status}**\n\n${result.message || result.code}\n` };
   const verdict = 'verdict' in result.reply ? (result.reply as Decision).verdict : null;
-  const label = `Claude ${verdict ? 'counsel' : 'review'} · Round ${round}`;
+  const label = `Claude ${agentName ? `agent ${agentName}` : verdict ? 'counsel' : 'review'} · Round ${round}`;
   const meta = `${backend} · ${result.requestedModel} · session ${result.sessionId}`;
   const answer = result.reply.answer;
   return { label, verdict, answer, answerSegments: answerSegments(answer), markdown: `**${label}**\n${verdict ? `**Verdict: \`${verdict}\`**\n` : ''}\n${meta}\n\n${answer}\n` };

@@ -24,6 +24,20 @@ test('both budget adapters use explicit provider estimates; unsupported CLI fail
   assert.throws(() => validateCliHelp(help, settingsWithBudget), e => e.code === 'budget_unsupported');
   validateCliHelp(help, settings); validateCliHelp(help + ' --max-budget-usd', settingsWithBudget);
 });
+test('custom agents accept a simple answer and cannot run project checks', () => {
+  const agentOptions = { ...options, workflow: 'agent' };
+  const cli = cliArguments(agentOptions);
+  const sdk = sdkOptions(agentOptions, () => {});
+  assert.ok(!cli[cli.indexOf('--allowedTools') + 1].includes('mcp__codex_claude__checks_run'));
+  assert.ok(!sdk.allowedTools.includes('mcp__codex_claude__checks_run'));
+  assert.ok(sdk.disallowedTools.includes('mcp__codex_claude__checks_run'));
+  assert.ok(sdk.allowedTools.includes('mcp__codex_claude__inputs_read'));
+  const parser = new StreamNormalizer(settings, 'agent', undefined, () => {});
+  parser.accept({ type: 'system', subtype: 'init', session_id: 's', model: settings.model });
+  parser.accept({ type: 'assistant', message: { id: 'm', model: settings.model, content: [] } });
+  parser.accept({ type: 'result', subtype: 'success', session_id: 's', structured_output: { answer: 'Custom result' } });
+  assert.equal(parser.finish(0).reply.answer, 'Custom result');
+});
 test('inherited routing cannot silently change authentication backend', () => {
   process.env.ANTHROPIC_API_KEY = 'fixture-not-a-key'; process.env.CLAUDE_CODE_OAUTH_TOKEN = 'fixture-not-a-token'; process.env.CLAUDE_CODE_USE_BEDROCK = '1';
   try { const cli = providerEnvironment('cli'); const sdk = providerEnvironment('sdk'); assert.equal(cli.ANTHROPIC_API_KEY, undefined); assert.equal(sdk.CLAUDE_CODE_OAUTH_TOKEN, undefined); assert.equal(sdk.CLAUDE_CODE_USE_BEDROCK, undefined); assert.equal(sdk.ANTHROPIC_API_KEY, 'fixture-not-a-key'); }

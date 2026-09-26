@@ -2,7 +2,7 @@
 
 <img src="plugin/claude/assets/logo.png" alt="Codex Claude Plugin logo" width="96">
 
-Claude counsel and combined code or document reviews inside Codex. Codex leads the conversation while one native forwarding subagent runs a foreground Claude call and relays its activity. Maintained by Skript It Oy, this is an independent project and is not affiliated with OpenAI or Anthropic.
+A Codex plugin for running Claude agents inside Codex. It includes `decide` for challenging proposals and `review` for code or document review. You can also create your own read-only Claude agents. Codex leads the conversation and starts a native subagent for each Claude call. Maintained by Skript It Oy, this is an independent project and is not affiliated with OpenAI or Anthropic.
 
 ## Install
 
@@ -31,6 +31,7 @@ $claude:review
 $claude:review --staged --spec docs/requirements.md
 $claude:review --base main --path src
 $claude:review --document docs/design.md --spec docs/requirements.md
+$claude:agent risk-audit Check the authentication changes.
 
 $claude:runs
 $claude:runs <run-id>
@@ -43,6 +44,20 @@ $claude:cancel <run-id>
 Code review defaults to staged, unstaged, and non-ignored untracked UTF-8 text changes against HEAD. `--staged` uses the index; `--base REF` selects a merge base; repeatable `--path` narrows Git scope. Repeatable `--document` selects document review instead. Both workflows accept repeatable `--spec` and `--standards`, plus per-run `--backend`, `--model`, `--effort`, and `--budget-usd` overrides. Unsupported model or effort choices fail rather than silently falling back.
 
 Each round is foreground work. The subagent transcript shows relayed Claude activity; completed answers and raw results are saved for exact retrieval with `$claude:runs`. If a provider attempt is interrupted or its outcome is unknown, inspect the saved evidence before explicitly retrying. An unknown project-check outcome is never replayed automatically.
+
+## Create your own Claude agent
+
+Put a plain Markdown file named `<name>.md` in your project's `.codex/claude-agents/` directory, or in `~/.codex/claude-agents/` for use across projects (`%USERPROFILE%\.codex\claude-agents\` on Windows). If `CODEX_HOME` is set, use its `claude-agents/` directory for personal agents. A project file with the same name takes precedence, so review its instructions before running it. Names use lowercase letters, digits, hyphens or underscores and must begin with a letter; `decide` and `review` are reserved.
+
+For example, create `.codex/claude-agents/risk-audit.md`:
+
+```md
+Examine the requested change for security risks. Focus on concrete data flows,
+trust boundaries and exploitable behavior. Cite file locations and explain
+uncertainty. Return a concise Markdown report.
+```
+
+Then ask Codex to run `$claude:agent risk-audit Check the authentication changes.` You can attach files with repeatable `--document`, `--spec` or `--standards` options. The agent file supplies instructions; the task comes from your request. The plugin saves the exact instructions used for each run, so later edits do not change its saved result. Custom agents can read and search the project and web; they cannot edit files, run shell commands, delegate, or run project checks through Claude. [Codex's own custom subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents) use separate `.toml` files under `.codex/agents/` or `~/.codex/agents/`.
 
 ## Data and permissions
 
@@ -58,16 +73,5 @@ Run state, reviewed inputs, Claude answers, and check output can contain private
 `CODEX_CLAUDE_DATA_HOME` selects another local filesystem directory. The plugin does not automatically migrate data between roots. `CODEX_CLAUDE_PATH` selects an installed Claude executable. Local filesystems with atomic rename semantics are required; network shares are unsupported.
 
 Claude receives scoped read and web tools plus the plugin's evidence and approved-check tools. Project checks execute real project code with the host user's authority and may create artifacts; they are not an operating-system sandbox. `$claude:setup --project` presents exact check definitions for approval. Changed definitions require renewed approval. Codex and Claude host permissions and managed restrictions still apply.
-
-## Development and verification
-
-```sh
-npm ci --ignore-scripts
-npm run typecheck
-npm test
-npm run release
-```
-
-`npm run release` builds the source and plugin archives in `release/`. Type checking and tests are deterministic and do not establish authenticated provider or native host behavior. `npm run smoke -- cli` and `npm run smoke -- sdk` make real provider calls; run them only with the corresponding credentials and environment. Authenticated SDK operation, macOS/Linux process lifecycle, and native host interface behavior require validation in those environments before making platform-wide claims.
 
 See [architecture](docs/architecture.md) and [troubleshooting](docs/troubleshooting.md). Report problems through [GitHub Issues](https://github.com/skriptit/codex-claude-plugin/issues). Released under the [MIT License](LICENSE); dependency notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

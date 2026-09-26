@@ -7,6 +7,8 @@ import type { Options } from '@anthropic-ai/claude-agent-sdk';
 
 export const BUILTINS = ['Read', 'Glob', 'Grep', 'WebSearch', 'WebFetch'];
 export const MCP_TOOLS = ['ping', 'inputs_list', 'inputs_read', 'git_status', 'git_log', 'checks_list', 'checks_run'].map(x => `mcp__codex_claude__${x}`);
+const allowedMcpTools = (workflow: Workflow) => workflow === 'agent' ? MCP_TOOLS.filter(x => !x.endsWith('__checks_run')) : MCP_TOOLS;
+const deniedTools = (workflow: Workflow) => workflow === 'agent' ? [...DENIED, 'mcp__codex_claude__checks_run'] : DENIED;
 export const DENIED = ['Bash', 'PowerShell', 'REPL', 'Write', 'Edit', 'NotebookEdit', 'Agent', 'Task', 'Skill'];
 export type TurnOptions = { cwd: string; directory: string; prompt: string; settings: Settings; workflow: Workflow; sessionId?: string; bundleDirectory?: string; runId?: string; checkPolicyFile?: string; };
 export function cliExecutable() {
@@ -44,7 +46,7 @@ export function mcpConfig(options: TurnOptions) {
 }
 export function cliArguments(options: TurnOptions) {
   const { settings } = options;
-  const args = ['--print', '--verbose', '--output-format', 'stream-json', '--include-partial-messages', '--model', settings.model, '--effort', settings.effort, '--restricted', '--setting-sources', '', '--settings', JSON.stringify({ disableAllHooks: true }), '--tools', BUILTINS.join(','), '--allowedTools', [...BUILTINS, ...MCP_TOOLS].join(','), '--disallowedTools', DENIED.join(','), '--permission-mode', 'dontAsk', '--permission-prompts', 'none', '--strict-mcp-config', '--mcp-config', JSON.stringify({ mcpServers: mcpConfig(options) }), '--disable-slash-commands', '--no-chrome', '--json-schema', JSON.stringify(schemaFor(options.workflow))];
+  const args = ['--print', '--verbose', '--output-format', 'stream-json', '--include-partial-messages', '--model', settings.model, '--effort', settings.effort, '--restricted', '--setting-sources', '', '--settings', JSON.stringify({ disableAllHooks: true }), '--tools', BUILTINS.join(','), '--allowedTools', [...BUILTINS, ...allowedMcpTools(options.workflow)].join(','), '--disallowedTools', deniedTools(options.workflow).join(','), '--permission-mode', 'dontAsk', '--permission-prompts', 'none', '--strict-mcp-config', '--mcp-config', JSON.stringify({ mcpServers: mcpConfig(options) }), '--disable-slash-commands', '--no-chrome', '--json-schema', JSON.stringify(schemaFor(options.workflow))];
   if (options.bundleDirectory) args.push('--add-dir', options.bundleDirectory);
   if (options.sessionId) args.push('--resume', options.sessionId);
   if (settings.budgetUsd !== undefined) args.push('--max-budget-usd', String(settings.budgetUsd));
@@ -54,7 +56,7 @@ export function sdkOptions(options: TurnOptions, launch: NonNullable<Options['sp
   return {
     cwd: options.cwd, model: options.settings.model, effort: options.settings.effort,
     env: providerEnvironment('sdk'),
-    tools: BUILTINS, allowedTools: [...BUILTINS, ...MCP_TOOLS], disallowedTools: DENIED,
+    tools: BUILTINS, allowedTools: [...BUILTINS, ...allowedMcpTools(options.workflow)], disallowedTools: deniedTools(options.workflow),
     settingSources: [], strictMcpConfig: true, mcpServers: mcpConfig(options),
     permissionMode: 'dontAsk', permissionPrompts: 'none', includePartialMessages: true,
     extraArgs: { restricted: null, settings: JSON.stringify({ disableAllHooks: true }), 'disable-slash-commands': null, 'no-chrome': null },

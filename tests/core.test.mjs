@@ -13,6 +13,7 @@ import { configure, resolveSettings } from '../dist/runtime/config.js';
 import { capture, checkoutFingerprint } from '../dist/inputs/bundle.js';
 import { approveChecks, verifyCheck, runCheck } from '../dist/policy/checks.js';
 import { assess, answerCheckpoint, createRun, inspect, runTurn, savedReply, raiseBudget, receipt } from '../dist/workflows/engine.js';
+import { loadAgent } from '../dist/workflows/agents.js';
 
 process.env.CODEX_CLAUDE_DATA_HOME = await mkdtemp(join(tmpdir(), 'codex-claude-tests-data-'));
 const settings = { backend: 'cli', model: 'claude-fable-5-1', effort: 'high' };
@@ -46,6 +47,43 @@ async function fixtureRepo() { const cwd = await mkdtemp(join(tmpdir(), 'codex-c
 test('staged review captures index bytes and default review captures working bytes', async () => { const { cwd, git } = await fixtureRepo(); await writeFile(join(cwd, 'file.txt'), 'staged\n'); git('add', 'file.txt'); await writeFile(join(cwd, 'file.txt'), 'working\n'); const root = await mkdtemp(join(tmpdir(), 'codex-claude-bundles-')); const staged = await capture(cwd, join(root, 'staged'), { staged: true }, 'review'); const working = await capture(cwd, join(root, 'working'), {}, 'review'); const a = staged.entries.find(e => e.kind === 'target'); const b = working.entries.find(e => e.kind === 'target'); assert.equal(await readFile(join(root, 'staged', a.artifact), 'utf8'), 'staged\n'); assert.equal(await readFile(join(root, 'working', b.artifact), 'utf8'), 'working\n'); assert.notEqual(staged.fingerprint, working.fingerprint); });
 test('untracked content changes fingerprint even with same filename', async () => { const { cwd } = await fixtureRepo(); await writeFile(join(cwd, 'new.txt'), 'one'); const before = await checkoutFingerprint(cwd); await writeFile(join(cwd, 'new.txt'), 'two'); assert.notEqual(await checkoutFingerprint(cwd), before); });
 test('clean repository and incompatible selectors', async () => { const { cwd } = await fixtureRepo(); const root = await mkdtemp(join(tmpdir(), 'codex-claude-clean-')); assert.equal((await capture(cwd, join(root, 'a'), {}, 'review')).nothingToReview, true); await assert.rejects(capture(cwd, join(root, 'b'), { staged: true, base: 'HEAD' }, 'review'), e => e.code === 'invalid_scope'); });
+test('custom agent files resolve by project before personal and freeze instructions for a run', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'codex-claude-agent-project-'));
+  const personalHome = await mkdtemp(join(tmpdir(), 'codex-claude-agent-home-'));
+  const previous = process.env.CODEX_HOME;
+  process.env.CODEX_HOME = personalHome;
+  try {
+    await mkdir(join(cwd, '.codex', 'claude-agents'), { recursive: true });
+    await mkdir(join(personalHome, 'claude-agents'), { recursive: true });
+    const projectFile = join(cwd, '.codex', 'claude-agents', 'risk-audit.md');
+    await writeFile(projectFile, 'Assess trust boundaries.\n');
+    await writeFile(join(personalHome, 'claude-agents', 'risk-audit.md'), 'Personal instructions.\n');
+    assert.equal((await loadAgent(cwd, 'risk-audit')).source, 'project');
+    const run = await createRun({ workflow: 'agent', agentName: 'risk-audit', cwd, question: 'Check authentication.', settings });
+    assert.equal(run.agent.instructions, 'Assess trust boundaries.');
+    assert.equal(run.bundle.selector, 'live-project');
+    await writeFile(projectFile, 'Changed instructions.\n');
+    const output = await runTurn(run.id, null, {}, async options => {
+      assert.match(options.prompt, /Assess trust boundaries\./);
+      assert.doesNotMatch(options.prompt, /Changed instructions/);
+      assert.match(options.prompt, /Check authentication\./);
+      return result({ reply: { answer: 'Found a trust boundary.' } });
+    });
+    assert.equal(output.run.status, 'completed');
+    const saved = await savedReply(run.id);
+    assert.equal(saved.display.answer, 'Found a trust boundary.');
+    assert.match(saved.display.label, /agent risk-audit/);
+    await assert.rejects(loadAgent(cwd, '../other'), e => e.code === 'invalid_agent_name');
+  } finally { if (previous === undefined) delete process.env.CODEX_HOME; else process.env.CODEX_HOME = previous; }
+});
+test('custom agent directories cannot redirect instruction loading through a link', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'codex-claude-agent-link-'));
+  const outside = await mkdtemp(join(tmpdir(), 'codex-claude-agent-outside-'));
+  await mkdir(join(outside, 'claude-agents'));
+  await writeFile(join(outside, 'claude-agents', 'risk-audit.md'), 'Outside instructions.');
+  await symlink(outside, join(cwd, '.codex'), process.platform === 'win32' ? 'junction' : 'dir');
+  await assert.rejects(loadAgent(cwd, 'risk-audit'), e => e.code === 'invalid_agent_file');
+});
 test('document inputs are captured and missing specs become omissions', async () => { const cwd = await mkdtemp(join(tmpdir(), 'codex-claude-docs-')); await writeFile(join(cwd, 'plan.md'), '# Plan\n'); const root = await mkdtemp(join(tmpdir(), 'codex-claude-doc-bundle-')); const bundle = await capture(cwd, root, { documents: ['plan.md'], specs: ['missing.md'] }, 'review'); assert.equal(bundle.entries[0].kind, 'document'); assert.equal(bundle.omissions.length, 1); });
 test('path escapes cannot enter a Git selection', async () => { const { cwd } = await fixtureRepo(); const root = await mkdtemp(join(tmpdir(), 'codex-claude-escape-')); await assert.rejects(capture(cwd, root, { paths: ['../outside'] }, 'review'), e => e.code === 'path_denied'); });
 test('approved checks run, changed definitions fail, unknown attempts never replay', async () => {
