@@ -12,7 +12,7 @@ Add the Git marketplace, then install the plugin:
 
 ```sh
 codex plugin marketplace add skriptit/codex-claude-plugin --ref codex/marketplace
-codex plugin add claude@skriptit-claude
+codex plugin add claude@skriptit-marketplace
 ```
 
 Start a new Codex task so it loads the skills, then run `$claude:setup`.
