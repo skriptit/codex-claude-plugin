@@ -21,8 +21,7 @@
     "capabilities": [],
     "defaultPrompt": [
       "Use $claude:setup to configure Claude agents.",
-      "Use $claude:decide to challenge this proposal.",
-      "Use $claude:review to review my changes.",
+      "Use $claude:decide to challenge a proposal or $claude:review to review changes.",
       "Use $claude:agent to run a custom Claude agent."
     ]
   }
