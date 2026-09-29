@@ -51,4 +51,3 @@ export async function approvedPath(roots, path) {
 export const validRunId = (id) => { if (!/^run-[a-f0-9-]{36}$/.test(id))
     throw new PluginError('invalid_run_id', 'Expected a complete plugin run ID.'); return id; };
 export const runPath = (id) => join(dataRoot(), 'runs', validRunId(id));
-//# sourceMappingURL=files.js.map

@@ -46,8 +46,15 @@ test('npm lifecycle or nested script changes invalidate approval', async () => {
 test('setup preserves choices and rejects invalid approvals before writing config', async () => {
   const cwd = await mkdtemp(join(root, 'setup-')); const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
   const run = (...args) => JSON.parse(execFileSync(process.execPath, [cli, 'setup', '--cwd', cwd, ...args], { encoding: 'utf8' }));
-  run('--model', 'custom-choice', '--effort', 'medium'); assert.equal(run().resolved.model, 'custom-choice');
+  run('--model', 'claude-custom-choice', '--effort', 'medium'); assert.equal(run().resolved.model, 'claude-custom-choice');
   const before = await readFile(join(process.env.CODEX_CLAUDE_DATA_HOME, 'config.json'), 'utf8');
-  assert.throws(() => run('--model', 'bad-write', '--approve-check', 'missing'));
+  assert.throws(() => run('--model', 'sonnet'), error => JSON.parse(error.stdout).code === 'invalid_model');
+  assert.throws(() => run('--model', 'claude-sonnet-4-5-latest'), error => JSON.parse(error.stdout).code === 'invalid_model');
+  assert.throws(() => run('--check', '--workflow', 'unknown'));
+  assert.throws(() => run('--model', 'claude-bad-write', '--approve-check', 'missing'));
   assert.equal(await readFile(join(process.env.CODEX_CLAUDE_DATA_HOME, 'config.json'), 'utf8'), before);
+  const configPath = join(process.env.CODEX_CLAUDE_DATA_HOME, 'config.json');
+  await writeFile(configPath, JSON.stringify({ version: 1, defaults: { model: 'sonnet' }, workflows: {}, projects: {} }));
+  assert.throws(() => run('--check'), error => JSON.parse(error.stdout).code === 'invalid_model');
+  assert.equal(run('--model', 'claude-repaired').resolved.model, 'claude-repaired');
 });

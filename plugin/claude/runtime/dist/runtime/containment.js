@@ -38,4 +38,3 @@ export async function contained(options) {
         options.signal?.removeEventListener('abort', stop);
     }
 }
-//# sourceMappingURL=containment.js.map

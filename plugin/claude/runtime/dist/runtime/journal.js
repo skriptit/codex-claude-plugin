@@ -84,4 +84,3 @@ export async function exists(path) { try {
 catch {
     return false;
 } }
-//# sourceMappingURL=journal.js.map

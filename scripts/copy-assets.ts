@@ -1,3 +1,3 @@
-import { cpSync, mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 mkdirSync('dist/runtime', { recursive: true });
-cpSync('src/runtime/containment.ps1', 'dist/runtime/containment.ps1');
+writeFileSync('dist/runtime/containment.ps1', readFileSync('src/runtime/containment.ps1', 'utf8').replace(/\r\n/g, '\n'));

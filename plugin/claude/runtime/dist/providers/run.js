@@ -38,4 +38,3 @@ export async function runProvider(options, onActivity, signal) {
 }
 export function requireCompleted(result) { if (result.status !== 'completed')
     throw new PluginError(result.code || result.status, result.message || 'Provider did not complete.', result); return result; }
-//# sourceMappingURL=run.js.map

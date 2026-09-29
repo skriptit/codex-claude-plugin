@@ -1,7 +1,7 @@
 import { realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 import { z } from 'zod';
-import { Defaults, type Settings, type Workflow } from '../contracts.js';
+import { Defaults, Model, PluginError, type Settings, type Workflow } from '../contracts.js';
 import { dataRoot, hash, readJson, writeJson } from './files.js';
 import { exclusive } from './mutex.js';
 
@@ -15,9 +15,12 @@ export async function loadConfig(): Promise<Configuration> {
 export async function projectKey(cwd: string) { const actual = await realpath(cwd); return hash(process.platform === 'win32' ? actual.toLowerCase() : actual); }
 export async function resolveSettings(cwd: string, workflow: Workflow, overrides: Partial<Settings> = {}): Promise<Settings> {
   const config = await loadConfig(); const project = config.projects[await projectKey(cwd)];
-  return Defaults.parse({ backend: 'cli', model: 'claude-fable-5-1', effort: 'high', ...config.defaults, ...config.workflows[workflow], ...project?.defaults, ...project?.workflows[workflow], ...overrides });
+  const settings = Defaults.parse({ backend: 'cli', model: 'claude-fable-5-1', effort: 'high', ...config.defaults, ...config.workflows[workflow], ...project?.defaults, ...project?.workflows[workflow], ...overrides });
+  if (!Model.safeParse(settings.model).success) throw new PluginError('invalid_model', 'The saved model must match the exact Claude model ID reported by the provider. Run setup with a full model ID to replace a short or -latest alias.');
+  return settings;
 }
 export async function configure(values: Partial<Settings>, cwd?: string, workflow?: Workflow) {
+  if (values.model !== undefined && !Model.safeParse(values.model).success) throw new PluginError('invalid_model', 'Use the exact Claude model ID reported by the provider. Short and -latest aliases cannot be verified against the response.');
   return exclusive(join(dataRoot(), '.config-locks'), async () => {
   const config = await loadConfig();
   const layer = cwd ? (config.projects[await projectKey(cwd)] ??= Layer.parse({})) : config;

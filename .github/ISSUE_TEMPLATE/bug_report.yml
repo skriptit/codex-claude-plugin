@@ -1,0 +1,29 @@
+name: Bug report
+description: Report a reproducible problem with the plugin.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For vulnerabilities, follow the [security policy](https://github.com/skriptit/codex-claude-plugin/security/policy) instead of posting details here.
+        Share a minimal reproduction with synthetic data. Remove credentials, private paths, project content, and saved transcripts.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include your OS, Codex app or CLI version, plugin version, Node version, Claude Code version, and selected backend/model/effort.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the skill or command and a minimal example.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual result
+      description: Include sanitized error codes or short output excerpts.
+    validations:
+      required: true

@@ -95,4 +95,3 @@ export async function runCheck(cwd, id, directory, bundleFingerprint, snapshotCh
     await writeJson(join(directory, `${operation}.json`), result);
     return result;
 }
-//# sourceMappingURL=checks.js.map

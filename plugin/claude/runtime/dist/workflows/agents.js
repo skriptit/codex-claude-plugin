@@ -35,4 +35,3 @@ export async function loadAgent(cwd, name) {
     }
     throw new PluginError('agent_not_found', `No ${name}.md agent found in this project's .codex/claude-agents or personal Codex home/claude-agents.`);
 }
-//# sourceMappingURL=agents.js.map

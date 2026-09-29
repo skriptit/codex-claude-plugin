@@ -210,4 +210,3 @@ export async function savedReply(id, round, segment, rawSegment) {
     return { ...transport(state, result, request.round, path), requestId: request.id };
 }
 export const readBrief = async (path) => Brief.parse(JSON.parse(await readFile(path, 'utf8')));
-//# sourceMappingURL=engine.js.map

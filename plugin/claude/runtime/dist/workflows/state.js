@@ -63,4 +63,3 @@ export function reduce(events) {
     }
     return state;
 }
-//# sourceMappingURL=state.js.map

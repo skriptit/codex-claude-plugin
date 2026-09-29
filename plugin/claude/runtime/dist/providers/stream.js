@@ -204,4 +204,3 @@ export class StreamNormalizer {
         return Object.assign(result, { status: 'completed', code: null, message: null, reply: parsed.data });
     }
 }
-//# sourceMappingURL=stream.js.map

@@ -1,19 +1,24 @@
 import { createHash } from 'node:crypto';
-import { lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { lstat, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { basename, join, parse, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SOURCE_NAME = 'codex-claude-plugin';
 const PLUGIN_NAME = 'claude';
 const SOURCE_ROOT_FILES = [
-  '.agents/plugins/marketplace.json', '.gitattributes', '.gitignore', 'LICENSE', 'README.md',
+  '.agents/plugins/marketplace.json', '.gitattributes', '.gitignore', 'CONTRIBUTING.md',
+  'LICENSE', 'README.md', 'SECURITY.md',
   'THIRD_PARTY_NOTICES.md', 'package.json', 'package-lock.json', 'tsconfig.json', 'tsconfig.tools.json',
+];
+const PUBLIC_GITHUB = [
+  '.github/dependabot.yml', '.github/ISSUE_TEMPLATE/bug_report.yml',
+  '.github/ISSUE_TEMPLATE/config.yml', '.github/pull_request_template.md',
   '.github/workflows/test.yml',
 ];
 const PUBLIC_DOCS = ['architecture.md', 'troubleshooting.md'];
 const PUBLIC_SCRIPTS = [
-  'copy-assets.ts', 'package.ts', 'register-personal.py',
-  'release.ts', 'smoke.ts',
+  'copy-assets.ts', 'package.ts', 'release.ts', 'smoke.ts',
 ];
 const PUBLIC_REFERENCES = ['decide.md', 'relay.md', 'selection.md'];
 const PUBLIC_SKILLS = ['agent', 'cancel', 'decide', 'resume', 'review', 'runs', 'setup'];
@@ -121,16 +126,17 @@ async function getStaticPluginPaths(root: string) {
 
 export async function sourceFiles(root: string) {
   const paths = [...SOURCE_ROOT_FILES];
-  const workflows = await treeFiles(root, '.github/workflows');
-  verifyTree(workflows, (path) => path === '.github/workflows/test.yml', 'workflow');
+  const agents = await treeFiles(root, '.agents');
+  verifyTree(agents, (path) => path === '.agents/plugins/marketplace.json', 'agent catalog');
+  const github = await treeFiles(root, '.github');
+  verifyTree(github, (path) => PUBLIC_GITHUB.includes(path), 'GitHub metadata');
+  paths.push(...PUBLIC_GITHUB);
   const docs = (await treeFiles(root, 'docs'));
   verifyTree(docs, (path) => PUBLIC_DOCS.includes(path.slice('docs/'.length)), 'documentation');
   paths.push(...PUBLIC_DOCS.map((name) => `docs/${name}`));
   const scripts = await treeFiles(root, 'scripts');
-  paths.push(...scripts.filter((path) => PUBLIC_SCRIPTS.includes(path.slice('scripts/'.length))));
-  for (const name of PUBLIC_SCRIPTS) {
-    if (!paths.includes(`scripts/${name}`)) throw new Error(`Missing required release script: ${name}`);
-  }
+  verifyTree(scripts, (path) => PUBLIC_SCRIPTS.includes(path.slice('scripts/'.length)), 'script');
+  paths.push(...PUBLIC_SCRIPTS.map((name) => `scripts/${name}`));
   const source = await treeFiles(root, 'src');
   verifyTree(source, (path) => PUBLIC_SOURCE.includes(path.slice('src/'.length)), 'source');
   paths.push(...PUBLIC_SOURCE.map((name) => `src/${name}`));
@@ -162,6 +168,20 @@ export async function pluginFiles(root: string) {
   const unique = [...new Set(paths)].sort();
   if (unique.length !== paths.length) throw new Error('Duplicate plugin archive path');
   return Promise.all(unique.map((path) => fileAt(root, path)));
+}
+
+async function assertTrackedFilesAllowlisted(root: string, files: ArchiveFile[]) {
+  try {
+    await lstat(join(root, '.git'));
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return;
+    throw error;
+  }
+  const allowed = new Set(files.map((file) => file.path));
+  const tracked = execFileSync('git', ['-C', root, 'ls-files', '--cached', '-z'], { encoding: 'utf8' })
+    .split('\0').filter(Boolean);
+  const unexpected = tracked.filter((path) => !allowed.has(path));
+  if (unexpected.length) throw new Error(`Unexpected tracked file(s): ${unexpected.join(', ')}`);
 }
 
 export function scanReleaseFiles(files: ArchiveFile[]) {
@@ -267,22 +287,19 @@ export function makeZip(files: ArchiveFile[], prefix: string) {
 export async function buildArchives(root: string, output = join(root, 'release')) {
   const source = await sourceFiles(root);
   const plugin = await pluginFiles(root);
-  const installReadme = Buffer.from('# Codex Claude Plugin\n\nInstall through the Codex marketplace:\n\n```sh\ncodex plugin marketplace add skriptit/codex-claude-plugin\ncodex plugin add claude@skriptit-marketplace\n```\n\nStart a new Codex task and run `$claude:setup`. The plugin requires Node.js 24 with npm and an authenticated Claude Code CLI or `ANTHROPIC_API_KEY` for the SDK backend. Setup stores configuration outside the plugin.\n\nReleased under the [MIT License](claude/LICENSE). Dependency terms are in [THIRD_PARTY_NOTICES.md](claude/THIRD_PARTY_NOTICES.md).\n', 'utf8');
   const pluginZipFiles = [
     ...plugin.map(({ path, data }) => ({ path: path.slice('plugin/'.length), data })),
-    { path: 'README.md', data: installReadme },
-    { path: 'register-personal.py', data: await readFile(join(root, 'scripts', 'register-personal.py')) },
   ];
+  await assertTrackedFilesAllowlisted(root, [...source, ...plugin]);
   scanReleaseFiles(source);
   scanReleaseFiles(pluginZipFiles);
   const sourceZip = makeZip(source, SOURCE_NAME);
   const pluginZip = makeZip(pluginZipFiles, '');
-  const marketplaceZip = makeZip(pluginZipFiles.filter(({ path }) => path.startsWith('claude/')), '');
   await mkdir(output, { recursive: true });
+  await rm(join(output, `${PLUGIN_NAME}-marketplace.zip`), { force: true });
   const artifacts = [
     { name: `${SOURCE_NAME}-source.zip`, bytes: sourceZip, count: source.length },
     { name: `${PLUGIN_NAME}-plugin.zip`, bytes: pluginZip, count: pluginZipFiles.length },
-    { name: `${PLUGIN_NAME}-marketplace.zip`, bytes: marketplaceZip, count: plugin.length },
   ];
   for (const artifact of artifacts) {
     await writeFile(join(output, artifact.name), artifact.bytes);

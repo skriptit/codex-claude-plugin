@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const VERSION = '0.1.0';
 export const Backend = z.enum(['cli', 'sdk']);
 export const Effort = z.enum(['low', 'medium', 'high', 'xhigh', 'max']);
+export const Model = z.string().regex(/^claude-(?!.*-latest$)[a-z0-9][a-z0-9._-]*$/i);
 export const Defaults = z.object({ backend: Backend, model: z.string().min(1), effort: Effort, budgetUsd: z.number().positive().optional() });
 export type Settings = z.infer<typeof Defaults>;
 export type Workflow = 'decide' | 'review' | 'agent';

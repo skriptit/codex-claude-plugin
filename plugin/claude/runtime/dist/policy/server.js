@@ -43,4 +43,3 @@ serveStdio(() => {
     server.registerTool('checks_run', { description: 'Run one approved check against the live checkout; may create build artifacts.', inputSchema: z.object({ id: z.string() }) }, ({ id }) => guarded(async () => { const snapshot = await manifest(); return runCheck(turn.cwd, id, join(turn.runId ? runPath(turn.runId) : directory, 'checks'), snapshot?.fingerprint ?? null, snapshot?.checkoutAtCapture ?? null, snapshot?.selector ?? null); }));
     return server;
 });
-//# sourceMappingURL=server.js.map

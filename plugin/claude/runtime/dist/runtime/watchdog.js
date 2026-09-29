@@ -27,4 +27,3 @@ process.on('SIGTERM', terminate);
 process.on('SIGINT', terminate);
 child.on('error', error => { clearInterval(timer); terminate(); process.stderr.write(String(error)); process.exit(70); });
 child.on('close', code => { clearInterval(timer); terminate(); process.exit(code ?? 130); });
-//# sourceMappingURL=watchdog.js.map

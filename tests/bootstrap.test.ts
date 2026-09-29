@@ -17,7 +17,7 @@ async function launcherFixture() {
 
 test('bootstrap preserves saved choices when an updated runtime needs installation, without writes', async () => {
   const launcher = await launcherFixture(); const root = await mkdtemp(join(tmpdir(), 'codex-claude-bootstrap-data-'));
-  const config = { version: 1, defaults: { backend: 'sdk', model: 'user-model', effort: 'medium' }, workflows: {}, projects: {} };
+  const config = { version: 1, defaults: { backend: 'sdk', model: 'claude-user-model', effort: 'medium' }, workflows: {}, projects: {} };
   const text = JSON.stringify(config); await writeFile(join(root, 'config.json'), text);
   const output = JSON.parse(execFileSync(process.execPath, [launcher, 'setup', '--check'], { env: { ...process.env, CODEX_CLAUDE_DATA_HOME: root }, encoding: 'utf8' }));
   assert.equal(output.status, 'setup_required'); assert.equal(output.changed, false); assert.deepEqual(output.configuration, config);

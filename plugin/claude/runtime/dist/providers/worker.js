@@ -41,4 +41,3 @@ else {
         process.exitCode = 1;
     }
 }
-//# sourceMappingURL=worker.js.map

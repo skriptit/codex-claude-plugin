@@ -31,4 +31,3 @@ export function identity(pid = process.pid) {
     }
 }
 export const alive = (owner) => identity(owner.pid)?.start === owner.start;
-//# sourceMappingURL=identity.js.map

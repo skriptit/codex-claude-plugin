@@ -60,4 +60,3 @@ export class Progress {
         this.fragments = '';
     } }
 }
-//# sourceMappingURL=render.js.map

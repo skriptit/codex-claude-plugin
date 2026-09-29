@@ -6,9 +6,9 @@ A Codex plugin for running Claude agents inside Codex. It includes `decide` for 
 
 ## Install
 
-You need Node.js 24 with npm, Git, and a Codex host that supports local plugins and native subagents. For the CLI backend, install and authenticate a compatible Claude Code CLI. The SDK backend requires `ANTHROPIC_API_KEY` in the host environment; keep credentials outside this repository and out of chat.
+You need Node.js 24 with npm, Git, and a local Codex host that supports plugins and native subagents. For the CLI backend, [install and sign in to Claude Code](https://code.claude.com/docs/en/quickstart). The SDK backend requires `ANTHROPIC_API_KEY` in the host environment; keep credentials outside this repository and out of chat. Claude usage counts against your account limits or API billing, depending on your backend and account.
 
-Add the Git marketplace, then install the plugin:
+In a terminal, add the Git marketplace and install the plugin:
 
 ```sh
 codex plugin marketplace add skriptit/codex-claude-plugin
@@ -19,7 +19,11 @@ Start a new Codex task so it loads the skills, then run `$claude:setup`.
 
 Setup installs the packaged runtime into a versioned per-user directory and stores configuration outside the repository. Run `$claude:setup --check` for a read-only prerequisite and configuration check; it does not install a missing runtime or test a live Claude call.
 
-Set the default Claude model and requested effort with `$claude:setup --model MODEL_ID --effort high`, replacing `MODEL_ID` with an identifier supported by your chosen backend. Add `--project` to save defaults for the current workspace, and optionally `--workflow decide|review|agent` to target one workflow. Effort can be `low`, `medium`, `high`, `xhigh`, or `max`. After setup, `$claude:setup --check` shows the resolved settings. A new run can override them, for example `$claude:review --model MODEL_ID --effort max`; an existing run keeps the settings it started with.
+Set the default Claude model and requested effort with `$claude:setup --model claude-fable-5-1 --effort high`. Use a [full model ID](https://platform.claude.com/docs/en/models/overview) available to your backend and account. Short and `-latest` aliases are rejected because the plugin verifies the exact model in the response. Effort can be `low`, `medium`, `high`, `xhigh`, or `max`.
+
+Add `--project` to save defaults for the current workspace, or `--workflow review` (also `decide` or `agent`) to target one workflow. Check the resolved settings with `$claude:setup --check`, adding `--workflow review` or `--workflow agent` to inspect those workflow settings. A new run can override them, for example `$claude:review --model claude-fable-5-1 --effort max`; an existing run keeps the settings it started with.
+
+To update the installed plugin, run `codex plugin marketplace upgrade skriptit-marketplace`, then `codex plugin remove claude@skriptit-marketplace` and `codex plugin add claude@skriptit-marketplace`. Start a new Codex task after reinstalling. To uninstall, remove the plugin and, if no longer needed, the marketplace with `codex plugin marketplace remove skriptit-marketplace`.
 
 ## Use
 
@@ -43,13 +47,13 @@ $claude:cancel <run-id>
 
 `decide` debates one saved proposal at a time. Codex shows Claude's complete answer, makes its own assessment, and asks the user whether to continue after each three unresolved rounds. A final decision needs the user's explicit approval; agreement between agents alone is not approval. `review` combines adversarial, specification, and standards scrutiny in one report. Codex assesses findings before offering to fix agreed ones. Neither workflow commits or publishes work on its own.
 
-Code review defaults to staged, unstaged, and non-ignored untracked UTF-8 text changes against HEAD. `--staged` uses the index; `--base REF` selects a merge base; repeatable `--path` narrows Git scope. Repeatable `--document` selects document review instead. Both workflows accept repeatable `--spec` and `--standards`, plus per-run `--backend`, `--model`, `--effort`, and `--budget-usd` overrides. Unsupported model or effort choices fail rather than silently falling back.
+Code review defaults to staged, unstaged, and non-ignored untracked UTF-8 text changes against HEAD. `--staged` uses the index; `--base REF` selects a merge base; repeatable `--path` narrows Git scope. Repeatable `--document` selects document review instead. All three workflows accept repeatable `--spec` and `--standards`, plus per-run `--backend`, `--model`, `--effort`, and `--budget-usd` overrides. Unsupported model or effort choices fail rather than silently falling back.
 
 Each round is foreground work. The subagent transcript shows relayed Claude activity; completed answers and raw results are saved for exact retrieval with `$claude:runs`. If a provider attempt is interrupted or its outcome is unknown, inspect the saved evidence before explicitly retrying. An unknown project-check outcome is never replayed automatically.
 
 ## Create your own Claude agent
 
-Put a plain Markdown file named `<name>.md` in your project's `.codex/claude-agents/` directory, or in `~/.codex/claude-agents/` for use across projects (`%USERPROFILE%\.codex\claude-agents\` on Windows). If `CODEX_HOME` is set, use its `claude-agents/` directory for personal agents. A project file with the same name takes precedence, so review its instructions before running it. Names use lowercase letters, digits, hyphens or underscores and must begin with a letter; `decide` and `review` are reserved.
+Put a plain Markdown file named `<name>.md` in your project's `.codex/claude-agents/` directory, or in `~/.codex/claude-agents/` for use across projects (`%USERPROFILE%\.codex\claude-agents\` on Windows). If `CODEX_HOME` is set, use its `claude-agents/` directory for personal agents. A project file with the same name takes precedence, so review its instructions before running it. Names use lowercase letters, digits, hyphens or underscores and must begin with a letter; `decide` and `review` are reserved. Agent files must be regular UTF-8 files of at most 32 KiB.
 
 For example, create `.codex/claude-agents/risk-audit.md`:
 
@@ -72,8 +76,8 @@ Run state, reviewed inputs, Claude answers, and check output can contain private
 | Windows | `%USERPROFILE%\.local\share\codex-claude-plugin` |
 | macOS/Linux | `$XDG_DATA_HOME/codex-claude-plugin`, otherwise `~/.local/share/codex-claude-plugin` |
 
-`CODEX_CLAUDE_DATA_HOME` selects another local filesystem directory. The plugin does not automatically migrate data between roots. `CODEX_CLAUDE_PATH` selects an installed Claude executable. Local filesystems with atomic rename semantics are required; network shares are unsupported.
+`CODEX_CLAUDE_DATA_HOME` selects another local filesystem directory. The plugin does not automatically migrate data between roots. `CODEX_CLAUDE_PATH` selects an installed Claude executable. Local filesystems with atomic rename semantics are required; network shares are unsupported. Uninstalling the plugin leaves the saved data directory in place; remove it separately if you want to erase your run history.
 
 Claude receives scoped read and web tools plus the plugin's evidence and approved-check tools. Project checks execute real project code with the host user's authority and may create artifacts; they are not an operating-system sandbox. `$claude:setup --project` presents exact check definitions for approval. Changed definitions require renewed approval. Codex and Claude host permissions and managed restrictions still apply.
 
-See [architecture](docs/architecture.md) and [troubleshooting](docs/troubleshooting.md). Report problems through [GitHub Issues](https://github.com/skriptit/codex-claude-plugin/issues). Released under the [MIT License](LICENSE); dependency notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+See [troubleshooting](docs/troubleshooting.md) and [architecture](docs/architecture.md). Report bugs through [GitHub Issues](https://github.com/skriptit/codex-claude-plugin/issues); see [SECURITY.md](SECURITY.md) for vulnerabilities and [CONTRIBUTING.md](CONTRIBUTING.md) to contribute. Released under the [MIT License](LICENSE); dependency notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

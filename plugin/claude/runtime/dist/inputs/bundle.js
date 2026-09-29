@@ -153,4 +153,3 @@ export async function capture(cwdInput, directory, selection, workflow) {
     await writeJson(join(directory, 'manifest.json'), bundle);
     return bundle;
 }
-//# sourceMappingURL=bundle.js.map

@@ -53,4 +53,3 @@ export async function exclusive(directory, action) {
         await rm(path, { force: true });
     }
 }
-//# sourceMappingURL=mutex.js.map

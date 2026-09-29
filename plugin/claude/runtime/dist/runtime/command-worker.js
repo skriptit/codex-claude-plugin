@@ -9,4 +9,3 @@ const spec = await readJson(process.argv[2]);
 const child = spawn(spec.command, spec.args, { cwd: spec.cwd, stdio: ['ignore', 'inherit', 'inherit'] });
 child.on('error', error => { process.stderr.write(String(error)); process.exit(70); });
 child.on('close', code => process.exit(code ?? 130));
-//# sourceMappingURL=command-worker.js.map

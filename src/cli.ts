@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import { Backend, PluginError, Effort, errorInfo, type Settings } from './contracts.js';
+import { Backend, PluginError, Effort, Model, errorInfo, type Settings } from './contracts.js';
 import { configure, loadConfig, resolveSettings } from './runtime/config.js';
 import { dataRoot, readJson } from './runtime/files.js';
 import { listRuns } from './runtime/journal.js';
@@ -36,7 +36,12 @@ async function main() {
   if (!command || v.help) return help;
   const cwd = resolve(v.cwd || process.cwd()); const overrides: Partial<Settings> = {};
   const runtime = { entrypoint: fileURLToPath(import.meta.url), node: process.versions.node };
-  if (v.backend) overrides.backend = Backend.parse(v.backend); if (v.model) overrides.model = v.model;
+  if (v.backend) overrides.backend = Backend.parse(v.backend);
+  if (v.model !== undefined) {
+    const model = Model.safeParse(v.model);
+    if (!model.success) throw new PluginError('invalid_model', 'Use the exact Claude model ID reported by the provider. Short aliases and -latest aliases cannot be verified against the response.');
+    overrides.model = model.data;
+  }
   if (v.effort) overrides.effort = Effort.parse(v.effort); if (v['budget-usd']) overrides.budgetUsd = number(v['budget-usd']);
   const id = v.run || args[0]; const expectedRevision = integer(v['expected-revision']);
   const progress = new Progress(line => process.stderr.write(line));
@@ -45,7 +50,8 @@ async function main() {
   try {
     if (command === 'setup') {
       if (v.check) {
-        const settings = await resolveSettings(cwd, v.workflow === 'review' ? 'review' : v.workflow === 'agent' ? 'agent' : 'decide', overrides);
+        const workflow = v.workflow ? z.enum(['decide', 'review', 'agent']).parse(v.workflow) : 'decide';
+        const settings = await resolveSettings(cwd, workflow, overrides);
         let provider; try { provider = preflight(settings); } catch (error) { provider = errorInfo(error); }
         return { dataRoot: dataRoot(), runtime, configuration: await loadConfig(), resolved: settings, provider, approvedChecks: await approvedChecks(cwd), candidateChecks: await discoverChecks(cwd), changed: false };
       }
