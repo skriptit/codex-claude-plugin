@@ -1,0 +1,55 @@
+import { mkdir, readdir, rm } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { join } from 'node:path';
+import { PluginError } from '../contracts.js';
+import { alive, identity } from './identity.js';
+import { readJson, writeJson } from './files.js';
+// Lamport bakery mutex on the local filesystem. Publish complete records with
+// atomic rename; never delete another contender's record. Dead owners are ignored,
+// including a writer interrupted while choosing. There is no stale-lock stealing.
+export async function exclusive(directory, action) {
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    const owner = identity();
+    if (!owner)
+        throw new PluginError('identity_unavailable', 'Cannot establish lock ownership.');
+    const name = `${randomUUID()}.ticket.json`;
+    const path = join(directory, name);
+    const mine = { owner, number: 0, choosing: true };
+    const tickets = async () => {
+        const found = [];
+        for (const file of await readdir(directory))
+            if (file.endsWith('.ticket.json') && file !== name) {
+                try {
+                    const ticket = await readJson(join(directory, file));
+                    if (!ticket.owner || !Number.isSafeInteger(ticket.number) || ticket.number < 0 || typeof ticket.choosing !== 'boolean')
+                        throw new PluginError('lock_corrupt', 'Invalid lock ticket.');
+                    if (alive(ticket.owner))
+                        found.push({ name: file, ticket });
+                }
+                catch (error) {
+                    if (error.code !== 'ENOENT')
+                        throw error;
+                }
+            }
+        return found;
+    };
+    await writeJson(path, mine);
+    try {
+        mine.number = Math.max(0, ...(await tickets()).map(t => t.ticket.number)) + 1;
+        mine.choosing = false;
+        await writeJson(path, mine);
+        const deadline = performance.now() + 10_000;
+        for (;;) {
+            const others = await tickets();
+            if (!others.some(t => t.ticket.choosing || t.ticket.number < mine.number || (t.ticket.number === mine.number && t.name < name)))
+                break;
+            if (performance.now() >= deadline)
+                throw new PluginError('run_busy', 'Another process is committing state.');
+            await new Promise(r => setTimeout(r, 30));
+        }
+        return await action();
+    }
+    finally {
+        await rm(path, { force: true });
+    }
+}

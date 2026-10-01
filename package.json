@@ -1,0 +1,36 @@
+{
+  "name": "codex-claude-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "author": "Skript It Oy",
+  "homepage": "https://github.com/skriptit/codex-claude-plugin",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skriptit/codex-claude-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/skriptit/codex-claude-plugin/issues"
+  },
+  "description": "Run built-in and custom Claude agents inside Codex",
+  "type": "module",
+  "engines": { "node": ">=24 <25" },
+  "bin": { "codex-claude": "dist/cli.js" },
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.tools.json && node scripts/copy-assets.ts",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.tools.json",
+    "test": "npm run build && node --test --test-concurrency=1 tests/*.test.ts",
+    "smoke": "npm run build && node scripts/smoke.ts",
+    "package:plugin": "npm run build && node scripts/package.ts",
+    "release": "npm run package:plugin && node scripts/release.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.268",
+    "@modelcontextprotocol/server": "2.0.0",
+    "zod": "4.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.12.0",
+    "typescript": "7.0.2"
+  }
+}

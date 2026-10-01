@@ -1,0 +1,36 @@
+name: test
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  deterministic:
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run release
+      - name: Verify committed runtime matches source
+        shell: bash
+        run: |
+          changes="$(git status --porcelain --untracked-files=all -- plugin/claude/runtime plugin/claude/LICENSE plugin/claude/THIRD_PARTY_NOTICES.md)"
+          if [ -n "$changes" ]; then
+            printf '%s\n' "$changes"
+            echo "Run npm run release and commit the regenerated plugin files."
+            exit 1
+          fi
