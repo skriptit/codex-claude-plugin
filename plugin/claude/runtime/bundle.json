@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "digest": "e1318d90fe84f4c890260b407100857c782b5d9e352b73de4d9cb96a781fcc9e",
+  "digest": "c4baafe8b41a4d3c9bcfdfaf35f4cf48d36672cdc8dcae6aa5e181f287610de6",
   "files": {
     "LICENSE": "2f26f6ba88412109693456ccc6e1385d9ca7506fef7df8f1ee03c5f5deb59838",
     "THIRD_PARTY_NOTICES.md": "5664d861bb4fece4c102d846ac86ab4406273ed45a153fb651ca264ca76f57bc",
@@ -27,7 +27,7 @@
     "dist/workflows/agents.js": "885f13ab2b30ee3fd25bb3e68feb46803de17587323420c0c43442a381617f45",
     "dist/workflows/engine.js": "285534ad88bbe293f4c8742f5e5b98992fbcd85b440ad71bc3863c1c89f0590e",
     "dist/workflows/state.js": "2fd173c2e445bcd8174b50bbb8381bcd3af1cf72d29440a3546d83080e6cdbf6",
-    "package-lock.json": "074c4c5e9ce5b46748d53c18621aebdaf58df344547486962831e7a22093c462",
+    "package-lock.json": "341ab7021246debc7085a4ae913eb264b3e377621b3c96048b2d07f2ba95fd58",
     "package.json": "239e62ee83a671462b4c189a1d6e709660a21ac8a2fc8e1567a8fb1afd0b7a6e"
   }
 }
